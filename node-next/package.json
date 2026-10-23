@@ -1,0 +1,38 @@
+{
+    "name": "onboarding-node-next",
+    "version": "0.1.0",
+    "private": true,
+    "description": "A site with its own login and orangecheck behind it: Connect, claiming at ochk.app, and sign in with orangecheck. Next.js, Pages Router.",
+    "license": "MIT",
+    "engines": {
+        "node": ">=22.13"
+    },
+    "scripts": {
+        "dev": "next dev",
+        "build": "next build",
+        "start": "next start",
+        "type-check": "tsc --noEmit",
+        "lint": "eslint .",
+        "test": "vitest run --maxWorkers=2",
+        "format": "prettier --write .",
+        "format:check": "prettier --check ."
+    },
+    "dependencies": {
+        "@orangecheck/auth-core": "^2.14.0",
+        "@orangecheck/me-client": "^0.39.0",
+        "jose": "^6.2.2",
+        "next": "16.4.2",
+        "react": "19.2.6",
+        "react-dom": "19.2.6"
+    },
+    "devDependencies": {
+        "@types/node": "^22.10.5",
+        "@types/react": "^19.0.7",
+        "@types/react-dom": "^19.0.3",
+        "eslint": "^9.39.5",
+        "eslint-config-next": "16.4.2",
+        "prettier": "^3.4.2",
+        "typescript": "^5.7.3",
+        "vitest": "^4.1.11"
+    }
+}

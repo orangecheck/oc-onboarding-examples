@@ -1,0 +1,53 @@
+name: CI
+
+# Every example, offline, against the stand-ins in its own folder. No secrets.
+
+on:
+    push:
+        branches: [main]
+    pull_request:
+        branches: [main]
+
+permissions:
+    contents: read
+
+concurrency:
+    group: ci-${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+
+jobs:
+    hygiene:
+        # A path into someone's home directory names a person in a public repo
+        # and works on one machine only.
+        name: No absolute home-directory paths
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v5
+            - run: |
+                  if git grep -nIE '(^|[^A-Za-z0-9_.:/-])/(Users|home)/[A-Za-z0-9_.-]+/' -- . ':!*.lock' ':!package-lock.json'; then
+                      echo "::error::absolute home-directory path in a tracked file"
+                      exit 1
+                  fi
+
+    node-next:
+        name: node-next (Node ${{ matrix.node }})
+        runs-on: ubuntu-latest
+        strategy:
+            matrix:
+                node: ['22', '24']
+        defaults:
+            run:
+                working-directory: node-next
+        steps:
+            - uses: actions/checkout@v5
+            - uses: actions/setup-node@v5
+              with:
+                  node-version: ${{ matrix.node }}
+                  cache: npm
+                  cache-dependency-path: node-next/package-lock.json
+            - run: npm ci
+            - run: npm run type-check
+            - run: npm run lint
+            - run: npm run format:check
+            - run: npm test
+            - run: npm run build

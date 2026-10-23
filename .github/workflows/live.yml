@@ -1,0 +1,37 @@
+name: Live
+
+# Weekly, against a test project: Connect provision, a later tick, a claim link
+# and delete, with that project's Connect key. Its only secret; it can't sign
+# anyone in. Never on pull requests, so a fork never sees it.
+
+on:
+    schedule:
+        - cron: '17 6 * * 1'
+    workflow_dispatch:
+
+permissions:
+    contents: read
+
+concurrency:
+    group: live
+    cancel-in-progress: false
+
+jobs:
+    connect:
+        if: github.repository == 'orangecheck/oc-onboarding-examples'
+        runs-on: ubuntu-latest
+        timeout-minutes: 10
+        defaults:
+            run:
+                working-directory: node-next
+        steps:
+            - uses: actions/checkout@v5
+            - uses: actions/setup-node@v5
+              with:
+                  node-version: '24'
+                  cache: npm
+                  cache-dependency-path: node-next/package-lock.json
+            - run: npm ci
+            - run: node scripts/connect-smoke.mjs
+              env:
+                  OCHK_CONNECT_KEY: ${{ secrets.OCHK_CONNECT_KEY }}
