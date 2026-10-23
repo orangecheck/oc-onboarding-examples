@@ -26,8 +26,8 @@ Read on 2026-10-23. This table changes when a status does.
 | Step | What the person does | Status |
 | --- | --- | --- |
 | 1 | Signs up with your site's own login | Yours. orangecheck is not involved. |
-| 2 | Gets an orangecheck account through Connect, without asking or by ticking a box | Deployed. Its first live run is this repo's own, against a test project. |
-| 3 | Claims that account at ochk.app | Deployed. Same. |
+| 2 | Gets an orangecheck account through Connect, without asking or by ticking a box | Live. First run on 2026-10-23 by this repo's live check (`node-next/scripts/connect-smoke.mjs`), against a test project: provision, a later tick, delete. `live.yml` runs it weekly. |
+| 3 | Claims that account at ochk.app | Deployed. The weekly run mints a live claim link; a person claiming one has not been run live yet. |
 | 4 | Signs in with orangecheck | Live. |
 | 5 | Moves to their own keys | **Not open.** See below. |
 
