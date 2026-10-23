@@ -73,6 +73,9 @@ with the site's own login.
 - `live.yml` runs weekly against a test project: Connect provision, claim link and
   delete. Its only secret is that project's Connect key, which cannot sign anyone
   in. Workflows from forks never see it.
+- A day after an `@orangecheck/*` package publishes, Renovate opens one pull
+  request with the bump, and CI merges it once every check passes, so the
+  examples never teach an old API.
 
 The repo is public, so its Actions minutes cost nothing.
 

@@ -51,3 +51,17 @@ jobs:
             - run: npm run format:check
             - run: npm test
             - run: npm run build
+
+    merge-renovate:
+        name: Merge family bump
+        needs: [hygiene, node-next]
+        if: github.event_name == 'pull_request' && github.head_ref == 'renovate/@orangecheck-(family)'
+        runs-on: ubuntu-latest
+        permissions:
+            contents: write
+            pull-requests: write
+        steps:
+            - name: Rebase-merge the PR
+              env:
+                  GH_TOKEN: ${{ github.token }}
+              run: gh pr merge ${{ github.event.pull_request.number }} --rebase --repo ${{ github.repository }}
