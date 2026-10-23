@@ -144,7 +144,10 @@ describe('sign in with orangecheck', () => {
             signInWithOrangecheck,
             await bearer(did('a'), { rh: null }),
         );
-        expect(r).toMatchObject({ status: 401, body: { error: 'no_handle' } });
+        // me-client 0.40 refuses it itself (no_session_handle); this site refuses it either way.
+        expect(r.status).toBe(401);
+        expect(r.cookie).toBeNull();
+        expect(users()).toHaveLength(0);
     });
 
     it('a token issued to another site is refused', async () => {

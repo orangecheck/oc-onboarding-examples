@@ -11,6 +11,7 @@ const SENTENCES: Record<string, string> = {
     already_linked: 'This account already has orangecheck linked.',
     token_spent: 'That sign-in was used already. Try again.',
     no_handle: 'That sign-in can’t be ended, so it isn’t accepted. Try again.',
+    no_session_handle: 'That sign-in can’t be ended, so it isn’t accepted. Try again.',
     revocations_unavailable: 'orangecheck can’t be reached just now. Try again in a minute.',
     connect_unavailable:
         'orangecheck can’t be reached just now, so nothing was deleted. Try again.',
