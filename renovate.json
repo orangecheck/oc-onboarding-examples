@@ -21,6 +21,25 @@
             "minimumReleaseAge": "1 day"
         },
         {
+            "description": "orangecheck on PyPI rides the same family bump, after the same 1-day window.",
+            "matchDatasources": ["pypi"],
+            "matchPackageNames": ["orangecheck"],
+            "matchUpdateTypes": ["patch", "minor"],
+            "enabled": true,
+            "groupName": "@orangecheck/* (family)",
+            "automerge": false,
+            "minimumReleaseAge": "1 day"
+        },
+        {
+            "description": "Human-review orangecheck major bumps on PyPI, as on npm.",
+            "matchDatasources": ["pypi"],
+            "matchPackageNames": ["orangecheck"],
+            "matchUpdateTypes": ["major"],
+            "enabled": true,
+            "automerge": false,
+            "labels": ["renovate", "major-bump"]
+        },
+        {
             "description": "Human-review @orangecheck/* major bumps — these change wire shape.",
             "matchPackageNames": ["/^@orangecheck//"],
             "matchUpdateTypes": ["major"],

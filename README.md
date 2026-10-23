@@ -15,9 +15,10 @@ and the same code runs against orangecheck.
 | Path | Stack | What it is |
 | --- | --- | --- |
 | [`node-next/`](./node-next) | Next.js 16, Pages Router, SQLite | The whole funnel: sign-up, Connect (opt-in box or seamless), claiming, sign in with orangecheck, link and unlink, account deletion. |
+| [`python-fastapi/`](./python-fastapi) | FastAPI, server-rendered, SQLite | The same funnel in Python, on the `orangecheck` package. Plain forms; the only script opens the sign-in popup. |
 
-Next in this repo: the same funnel in Python (FastAPI), and a local, throwaway
-guardian federation for learning how a guardian runs.
+Next in this repo: a local, throwaway guardian federation for learning how a
+guardian runs.
 
 ## The funnel, and where each step stands
 

@@ -52,9 +52,30 @@ jobs:
             - run: npm test
             - run: npm run build
 
+    python-fastapi:
+        name: python-fastapi (Python ${{ matrix.python }})
+        runs-on: ubuntu-latest
+        strategy:
+            matrix:
+                python: ['3.10', '3.13']
+        defaults:
+            run:
+                working-directory: python-fastapi
+        steps:
+            - uses: actions/checkout@v5
+            - uses: astral-sh/setup-uv@v6
+              with:
+                  python-version: ${{ matrix.python }}
+                  enable-cache: true
+                  cache-dependency-glob: python-fastapi/uv.lock
+            - run: uv sync --locked
+            - run: uv run ruff check
+            - run: uv run ruff format --check
+            - run: uv run pytest
+
     merge-renovate:
         name: Merge family bump
-        needs: [hygiene, node-next]
+        needs: [hygiene, node-next, python-fastapi]
         if: github.event_name == 'pull_request' && github.head_ref == 'renovate/@orangecheck-(family)'
         runs-on: ubuntu-latest
         permissions:

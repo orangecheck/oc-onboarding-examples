@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Stand-in claim{% endblock %}
+{% block main %}
+<h1>Stand-in for ochk.app’s claim page</h1>
+<p class="hint">
+  Offline mode. At ochk.app the person signs in and confirms; the account becomes theirs, and
+  your site hears <code>connect.claimed</code>.
+</p>
+{% if state == "claimed" %}
+<p>Claimed. <a href="/account">Back to your account</a></p>
+{% elif state == "failed" %}
+<p class="error">That link was used already, or it expired.</p>
+{% else %}
+<form class="stack" method="post" action="/stand-in/claim" id="stand-in-claim">
+  <input type="hidden" name="t" />
+  <button type="submit">Confirm the claim</button>
+</form>
+{% endif %}
+{% endblock %}

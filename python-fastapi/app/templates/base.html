@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>{% block title %}{% endblock %} · Example site</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <header class="top">
+      <a href="/" class="brand">Example site</a>
+      <nav>
+        {% if signed_in %}<a href="/account">Your account</a>{% else %}<a href="/signin">Sign in</a>{% endif %}
+      </nav>
+    </header>
+    {% if mode == "offline" %}
+    <p class="banner">
+      Offline mode. Nothing here talks to orangecheck: sign-in, Connect and claiming run against
+      stand-ins in this repo. Add your keys to <code>.env</code> to run it live.
+    </p>
+    {% elif not ended_sessions_checked %}
+    <p class="banner">
+      Live, without <code>OC_SIGNING_SECRET</code>: a session someone ends everywhere is not
+      refused here. A deployment refuses to start without it.
+    </p>
+    {% endif %}
+    <main>{% block main %}{% endblock %}</main>
+    <script type="module" src="/static/orangecheck.mjs"></script>
+  </body>
+</html>

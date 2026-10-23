@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Sign in{% endblock %}
+{% block main %}
+<h1>Sign in</h1>
+<form class="card stack" method="post" action="/signin">
+  <label>Email <input name="email" type="email" autocomplete="email" required /></label>
+  <label>
+    Password <input name="password" type="password" autocomplete="current-password" required />
+  </label>
+  {% if error %}<p class="error">{{ error }}</p>{% endif %}
+  <button type="submit">Sign in</button>
+</form>
+<div class="card stack">
+  <div class="stack">
+    <button
+      type="button"
+      class="oc"
+      data-orangecheck="/api/auth/orangecheck"
+      data-then="/account"
+      data-offline="{{ 'true' if mode == 'offline' else 'false' }}"
+    >
+      Sign in with orangecheck
+    </button>
+    <p class="error" hidden></p>
+  </div>
+  <p class="hint">
+    A Bitcoin wallet, email, Google or GitHub. This site gets an id for you, not your address.
+  </p>
+</div>
+<p class="hint">New here? <a href="/signup">Sign up</a></p>
+{% endblock %}

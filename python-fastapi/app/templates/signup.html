@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Sign up{% endblock %}
+{% block main %}
+<h1>Sign up</h1>
+<form class="card stack" method="post" action="/signup">
+  <label>Email <input name="email" type="email" autocomplete="email" required /></label>
+  <label>
+    Password
+    <input name="password" type="password" autocomplete="new-password" minlength="10" required />
+  </label>
+  {% if connect == "opt-in" %}
+  {# Unticked by default, never bundled with anything else; the words are the SDK's. #}
+  <div class="consent">
+    <label class="check"><input type="checkbox" name="orangecheck" /> {{ label }}</label>
+    <p class="hint">{{ blurb }}</p>
+  </div>
+  {% elif connect == "seamless" %}
+  <p class="hint">
+    Signing up also makes you an orangecheck account. It stays with orangecheck until you claim it
+    at ochk.app, and this site gets an id for it, nothing else about you.
+  </p>
+  {% endif %}
+  {% if error %}<p class="error">{{ error }}</p>{% endif %}
+  <button type="submit">Sign up</button>
+</form>
+<p class="hint">Have an account? <a href="/signin">Sign in</a></p>
+{% endblock %}

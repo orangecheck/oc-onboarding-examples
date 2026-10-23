@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}Your account{% endblock %}
+{% block main %}
+<h1>Your account</h1>
+{% if error %}<p class="error">{{ error }}</p>{% endif %}
+
+<section class="card stack">
+  <h2>You</h2>
+  <p>{{ user.email or "You sign in with orangecheck only." }}</p>
+  <form class="actions" method="post" action="/signout">
+    <button type="submit" class="quiet">Sign out</button>
+  </form>
+</section>
+
+{% if connect %}
+<section class="card stack">
+  <h2>Your orangecheck account</h2>
+  {% if user.connect_did %}
+  <p><code>{{ user.connect_did }}</code></p>
+  <p class="hint">
+    {% if user.connect_claimed %}You claimed it at ochk.app: it is yours, and works on other
+    sites.{% else %}Made by Connect. It stays with orangecheck until you claim it at ochk.app.{%
+    endif %}
+  </p>
+  {% if not user.connect_claimed %}
+  <form class="actions" method="post" action="/connect/claim-link">
+    <button type="submit">Claim it at ochk.app</button>
+  </form>
+  {% endif %}
+  {% endif %}
+  {% if not user.connect_did or not user.connect_consent %}
+  <form class="consent stack" method="post" action="/connect/provision">
+    <label class="check"><input type="checkbox" name="orangecheck" required /> {{ label }}</label>
+    <p class="hint">{{ blurb }}</p>
+    <p class="actions">
+      <button type="submit">{{ "Save" if user.connect_did else "Create it" }}</button>
+    </p>
+  </form>
+  {% endif %}
+</section>
+{% endif %}
+
+<section class="card stack">
+  <h2>Sign in with orangecheck</h2>
+  {% if linked %}
+  <p>Linked: <code>{{ linked }}</code></p>
+  {% if has_password %}{% if fresh %}
+  <form class="actions" method="post" action="/account/unlink">
+    <button type="submit" class="quiet">Unlink orangecheck</button>
+  </form>
+  {% else %}
+  <p class="hint">
+    To unlink it, <a href="/reauth?next=/account">confirm your password</a> first.
+  </p>
+  {% endif %}{% endif %}
+  {% elif has_password %}{% if fresh %}
+  <div class="stack">
+    <button
+      type="button"
+      class="oc"
+      data-orangecheck="/api/account/link"
+      data-then="/account"
+      data-offline="{{ 'true' if mode == 'offline' else 'false' }}"
+    >
+      Link orangecheck
+    </button>
+    <p class="error" hidden></p>
+  </div>
+  {% else %}
+  <p class="hint">
+    Link orangecheck to sign in with it here.
+    <a href="/reauth?next=/account">Confirm your password</a> first.
+  </p>
+  {% endif %}{% endif %}
+</section>
+
+<section class="card stack">
+  <h2>Your own keys</h2>
+  <p class="hint">
+    Not open yet. orangecheck holds every key that can move funds while the system is in testing.
+    Signing in with your own Bitcoin wallet is self-custody of that key today; it does not move
+    what you earn. See <a href="https://ochk.app/custody">ochk.app/custody</a>.
+  </p>
+</section>
+
+<section class="card stack">
+  <h2>Delete your account</h2>
+  {% if claim_url is not none %}
+  <p>
+    Your orangecheck account holds earnings, so it stays.
+    {% if claim_url %}<a href="{{ claim_url }}">Claim it</a> before you go.{% else %}Claim it from
+    this page before you go.{% endif %}
+  </p>
+  {% elif fresh %}
+  <form class="actions" method="post" action="/account/delete">
+    <button type="submit" class="danger">Delete my account</button>
+  </form>
+  {% else %}
+  <p class="hint"><a href="/reauth?next=/account">Confirm your password</a> first.</p>
+  {% endif %}
+</section>
+{% endblock %}

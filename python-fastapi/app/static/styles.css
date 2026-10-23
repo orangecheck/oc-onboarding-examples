@@ -1,0 +1,217 @@
+:root {
+    color-scheme: light dark;
+    --bg: #fafafa;
+    --fg: #171717;
+    --muted: #5c5c5c;
+    --card: #ffffff;
+    --line: #e5e5e5;
+    --accent: #e8590c;
+    --accent-fg: #ffffff;
+    --danger: #c92a2a;
+    --banner: #fff4e6;
+    font-family:
+        system-ui,
+        -apple-system,
+        'Segoe UI',
+        sans-serif;
+    line-height: 1.5;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #0f0f0f;
+        --fg: #ededed;
+        --muted: #a3a3a3;
+        --card: #191919;
+        --line: #2b2b2b;
+        --accent-fg: #ffffff;
+        --danger: #ff6b6b;
+        --banner: #2b1d10;
+    }
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+}
+
+a {
+    color: inherit;
+    text-underline-offset: 3px;
+}
+
+code {
+    font-size: 0.875em;
+    overflow-wrap: anywhere;
+}
+
+.top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    max-width: 44rem;
+    margin: 0 auto;
+    padding: 1rem;
+}
+
+.brand {
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.banner {
+    max-width: 44rem;
+    margin: 0 auto 0.5rem;
+    padding: 0.75rem 1rem;
+    background: var(--banner);
+    border-radius: 0.75rem;
+    font-size: 0.9375rem;
+}
+
+main {
+    max-width: 44rem;
+    margin: 0 auto;
+    padding: 1rem 1rem 4rem;
+}
+
+main.popup {
+    max-width: 26rem;
+    padding-top: 2rem;
+}
+
+h1 {
+    font-size: 1.75rem;
+    line-height: 1.2;
+    margin: 0.5rem 0 1rem;
+}
+
+h2 {
+    font-size: 1.125rem;
+    margin: 0;
+}
+
+.lead {
+    color: var(--muted);
+    font-size: 1.0625rem;
+}
+
+.hint {
+    color: var(--muted);
+    font-size: 0.9375rem;
+    margin: 0;
+}
+
+.error {
+    color: var(--danger);
+    margin: 0;
+}
+
+.card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 1rem;
+    padding: 1.25rem;
+    margin: 0 0 1rem;
+}
+
+.stack {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.stack > p {
+    margin: 0;
+}
+
+.funnel {
+    padding-left: 1.25rem;
+}
+
+.funnel li {
+    margin: 0 0 0.75rem;
+}
+
+label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    font-weight: 500;
+}
+
+label.check {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 0.5rem;
+}
+
+label.check input {
+    margin-top: 0.3rem;
+}
+
+input[type='email'],
+input[type='password'],
+input:not([type]) {
+    font-size: 1rem;
+    padding: 0.625rem 0.75rem;
+    border: 1px solid var(--line);
+    border-radius: 0.625rem;
+    background: var(--bg);
+    color: var(--fg);
+}
+
+button,
+.button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.75rem;
+    padding: 0 1.125rem;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    background: var(--fg);
+    color: var(--bg);
+    font: inherit;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+button.oc {
+    background: var(--accent);
+    color: var(--accent-fg);
+}
+
+button.quiet,
+.button.quiet {
+    background: transparent;
+    color: var(--fg);
+    border-color: var(--line);
+}
+
+button.danger {
+    background: var(--danger);
+    color: #ffffff;
+}
+
+button:disabled {
+    opacity: 0.55;
+    cursor: default;
+}
+
+.actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin: 0;
+}
+
+.consent {
+    border-top: 1px solid var(--line);
+    padding-top: 0.75rem;
+}

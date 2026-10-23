@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Stand-in sign-in{% endblock %}
+{% block main %}
+<h1>Stand-in for orangecheck’s sign-in</h1>
+<p class="hint">
+  Offline mode. The real popup signs people in with a Bitcoin wallet, email, Google or GitHub.
+  Here, name a test person; the same name comes back as the same orangecheck account.
+</p>
+{% if allowed %}
+<form class="stack" id="stand-in-popup" data-opener="{{ opener }}">
+  <label>Test person <input name="name" value="Ada" required maxlength="40" /></label>
+  <button type="submit">Sign in</button>
+</form>
+{% else %}
+<p class="error">This stand-in only signs in to this site.</p>
+{% endif %}
+{% endblock %}
