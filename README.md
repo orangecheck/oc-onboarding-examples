@@ -16,9 +16,7 @@ and the same code runs against orangecheck.
 | --- | --- | --- |
 | [`node-next/`](./node-next) | Next.js 16, Pages Router, SQLite | The whole funnel: sign-up, Connect (opt-in box or seamless), claiming, sign in with orangecheck, link and unlink, account deletion. |
 | [`python-fastapi/`](./python-fastapi) | FastAPI, server-rendered, SQLite | The same funnel in Python, on the `orangecheck` package. Plain forms; the only script opens the sign-in popup. |
-
-Next in this repo: a local, throwaway guardian federation for learning how a
-guardian runs.
+| [`guardian/`](./guardian) | bash, the guardian kit, regtest | A local, throwaway Fedimint federation of four guardians, run with `oc-guardian`: the key ceremony, consensus and a deposit. Nothing leaves your machine. |
 
 ## The funnel, and where each step stands
 

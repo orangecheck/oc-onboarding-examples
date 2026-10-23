@@ -82,9 +82,21 @@ jobs:
             - run: uv run ruff format --check
             - run: uv run pytest
 
+    guardian:
+        name: guardian (script checks)
+        runs-on: ubuntu-latest
+        defaults:
+            run:
+                working-directory: guardian
+        steps:
+            - uses: actions/checkout@v5
+            - run: bash -n local-federation.sh
+            - run: shellcheck local-federation.sh
+            - run: python3 -m py_compile bundle_wrapper.py esplora_stand_in.py
+
     merge-renovate:
         name: Merge family bump
-        needs: [hygiene, node-next, python-fastapi]
+        needs: [hygiene, node-next, python-fastapi, guardian]
         if: github.event_name == 'pull_request' && github.head_ref == 'renovate/@orangecheck-(family)'
         runs-on: ubuntu-latest
         permissions:
