@@ -4,6 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="robots" content="noindex" />
+    {% if domain_verify %}<meta name="oc-domain-verify" content="{{ domain_verify }}" />{% endif %}
     <title>{% block title %}{% endblock %} · Example site</title>
     <link rel="stylesheet" href="/static/styles.css" />
   </head>

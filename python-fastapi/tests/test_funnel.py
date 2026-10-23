@@ -311,6 +311,12 @@ def test_connect_claimed_marks_the_account_claimed(monkeypatch):
     assert users()[0]["connect_claimed"] == 1
 
 
+def test_the_domain_token_is_in_the_html_the_check_reads(monkeypatch):
+    assert "oc-domain-verify" not in browser().get("/").text
+    monkeypatch.setenv("OC_DOMAIN_VERIFY", "tok_123")
+    assert '<meta name="oc-domain-verify" content="tok_123" />' in browser().get("/").text
+
+
 def test_pages_load_the_popup_as_a_module_from_this_site_only():
     r = browser().get("/signin")
     assert r.headers["cross-origin-opener-policy"] == "same-origin-allow-popups"

@@ -5,6 +5,7 @@ Every route is a plain `def`, so FastAPI runs it in a thread: the SDK's calls ar
 synchronous and can wait on the network."""
 
 import json
+import os
 import re
 import sqlite3
 from contextlib import asynccontextmanager
@@ -173,6 +174,7 @@ def page(request: Request, name: str, status_code: int = 200, **context):
             "mode": c.mode,
             "ended_sessions_checked": ended_sessions_checked(c),
             "signed_in": isinstance(who, Who),
+            "domain_verify": os.environ.get("OC_DOMAIN_VERIFY", "").strip(),
             **context,
         },
         status_code=status_code,

@@ -42,7 +42,9 @@ free, in test mode or live.
 
 1. Copy `.env.example` to `.env`.
 2. Fill in `OC_PROJECT_KEY` and, for a deployment, `OC_SIGNING_SECRET`, from the
-   project's Keys & webhooks tab. Verify the project's domain.
+   project's Keys & webhooks tab. To verify the project's domain by meta tag,
+   put its token in `OC_DOMAIN_VERIFY`; every page then serves
+   `<meta name="oc-domain-verify">`.
 3. For Connect, switch on "Your own login" in the project's Sign-in tab, and put
    the API key it shows you, once, in `OCHK_CONNECT_KEY`.
 4. Set `SITE_ORIGIN` to this site's exact origin. Sign-in tokens are bound to it.
