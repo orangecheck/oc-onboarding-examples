@@ -2,7 +2,7 @@
 or the Connect docs (ochk.io/docs/connect), through the site's real routes."""
 
 import pytest
-from orangecheck import BondRequired, InvalidSession
+from orangecheck import BondRequired, InvalidSession, RevocationList
 
 from app import db, sessions
 from app.config import assert_deployable
@@ -233,6 +233,14 @@ def orangecheck_session():
     b = browser()
     b.post("/api/auth/orangecheck", headers=bearer(did("a")))
     return b
+
+
+def test_on_localhost_both_keys_check_ended_sessions(monkeypatch):
+    # A test project's declared development origin makes the list readable for localhost.
+    monkeypatch.setenv("OC_PROJECT_KEY", "pk_test_x")
+    assert sessions.ended_sessions() is None  # no secret: nothing to read it with
+    monkeypatch.setenv("OC_SIGNING_SECRET", "secret")
+    assert isinstance(sessions.ended_sessions(), RevocationList)  # localhost is no exemption
 
 
 def test_a_session_ended_everywhere_is_signed_out_here():

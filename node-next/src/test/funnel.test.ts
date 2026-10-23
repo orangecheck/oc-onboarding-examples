@@ -226,7 +226,7 @@ describe('ending every session', () => {
         return b;
     }
 
-    it('an ended session is signed out here', async () => {
+    it('an ended session is signed out here, on localhost too (a declared development origin)', async () => {
         const b = await orangecheckSession();
         process.env.OC_PROJECT_KEY = 'pk_test_x';
         process.env.OC_SIGNING_SECRET = 'secret';

@@ -48,7 +48,8 @@ export function Layout({
             ) : !info.endedSessionsChecked ? (
                 <p className="banner">
                     Live, without <code>OC_SIGNING_SECRET</code>: a session someone ends everywhere
-                    is not refused here. A deployment refuses to start without it.
+                    is not refused here. Set it, with your test project&apos;s development origin
+                    declared on localhost; a deployment refuses to start without it.
                 </p>
             ) : null}
             <main>{children}</main>

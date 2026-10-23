@@ -23,7 +23,8 @@
     {% elif not ended_sessions_checked %}
     <p class="banner">
       Live, without <code>OC_SIGNING_SECRET</code>: a session someone ends everywhere is not
-      refused here. A deployment refuses to start without it.
+      refused here. Set it, with your test project's development origin declared on localhost;
+      a deployment refuses to start without it.
     </p>
     {% endif %}
     <main>{% block main %}{% endblock %}</main>

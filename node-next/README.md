@@ -51,10 +51,18 @@ free, in test mode or live.
 5. Point the project's webhook at `https://<your site>/api/webhooks/orangecheck`,
    so the site hears when someone claims their account.
 
-On localhost, leave `OC_SIGNING_SECRET` empty. A project's domain can't be
-localhost, and the list of sessions people ended everywhere answers only for the
-project's verified https domain. So a local run signs in, but doesn't refuse a
-session someone ended everywhere. A banner says so.
+On localhost, use a test project and declare a development origin on it: the
+project's Sign-in page on ochk.app, under Local development. It must equal
+`SITE_ORIGIN` exactly, port included (`http://localhost:3000` by default). Then
+set `OC_SIGNING_SECRET` locally too, and "Sign out everywhere" on ochk.app ends
+your local session as it would a live one, within about a minute
+([how](https://ochk.io/docs/me/sdk#when-someone-ends-every-session)).
+
+With the secret set and no development origin declared, the list of ended
+sessions can't be read for a local origin, so sign-in itself answers
+`503 revocations_unavailable`. Without the secret, a local run signs in but
+doesn't refuse a session someone ended everywhere, and a banner says so. A
+project has one development origin, and going live clears it.
 
 ## Where each step lives
 

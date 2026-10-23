@@ -40,7 +40,8 @@ upgrade.
 Make a project at [ochk.app/me/projects](https://ochk.app/me/projects). It's free,
 in test mode or live. Then copy `.env.example` to `.env` and fill it in, as the
 [Node example's README](../node-next/README.md#run-it-live) describes. The variables
-and the localhost caveat are the same.
+and the localhost steps, a development origin declared on your test project, are
+the same.
 
 ## How the sign-in works
 
