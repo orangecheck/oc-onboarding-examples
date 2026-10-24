@@ -12,16 +12,16 @@
 # kernel's ephemeral range, where any outgoing connection could take one.
 # To skip a download, point these at binaries you have already verified:
 #   BITCOIND, BITCOIN_CLI    Bitcoin Core's bitcoind and bitcoin-cli
-#   OC_GUARDIAN              oc-guardian 0.2.7
+#   OC_GUARDIAN              oc-guardian 0.2.8
 #   FEDIMINTD_BUNDLE         the fedimintd 0.11.4 release file (its pinned sha256 is still checked)
 #   FEDIMINT_CLI_BUNDLE      the fedimint-cli 0.11.4 release file (its pinned sha256 is still checked)
 # PEGIN_BTC (default 0.01) is the amount pegin deposits.
 set -euo pipefail
 
-KIT_VERSION=0.2.7
+KIT_VERSION=0.2.8
 KIT_REPO=orangecheck/oc-guardian-kit
 KIT_TARGET=x86_64-unknown-linux-gnu
-KIT_SHA256=d02850819a66d6f983930476f708d0474ddec1ca48fc3d47cba5390234944441
+KIT_SHA256=4eba86436914094e7a6ea45ed9cfe8c51b2545e41cc1ec769de9e1e5f080445e
 FEDIMINT_VERSION=0.11.4
 # The kit pins this in install.rs; it matches GitHub's published digest.
 FEDIMINTD_SHA256=52b36e81d7bab75c2e3f243566c1ad3dffe4978120d433cc96f1a5d51f62451a
@@ -182,9 +182,9 @@ FM_ENV=(FM_PKARR_ENABLE=false NO_COLOR=1)
 KIT=()
 kit_env() {  # guardian index -> KIT=(env ... oc-guardian), the settings `fedimintd run` and `ceremony` read
   local i="$1" g="$WD/g$1"
-  KIT=(env -i PATH="$PATH" HOME="$HOME" XDG_CONFIG_HOME="$g/config" "${FM_ENV[@]}"
-    OC_OPERATOR_ID="$(cat "$g/config/oc-guardian/operator.id")"
-    OC_OPERATOR_PUBKEY_HEX="$(cat "$g/config/oc-guardian/operator.pub")"
+  KIT=(env -i PATH="$PATH" HOME="$HOME" OC_GUARDIAN_CONFIG_DIR="$g/config" "${FM_ENV[@]}"
+    OC_OPERATOR_ID="$(cat "$g/config/operator.id")"
+    OC_OPERATOR_PUBKEY_HEX="$(cat "$g/config/operator.pub")"
     OC_FEDERATION_SLUG="$FED_NAME" OC_BITCOIN_NETWORK=regtest
     OC_BITCOIND_URL="http://127.0.0.1:$P_RPC" OC_BITCOIND_USERNAME=local OC_BITCOIND_PASSWORD="$(cat "$WD/rpcpass")"
     OC_PUBLIC_HOST=127.0.0.1 OC_P2P_PORT="$(gport "$i" 0)" OC_API_PORT="$(gport "$i" 1)" OC_UI_PORT="$(gport "$i" 2)"
@@ -273,12 +273,12 @@ EOF
     g="$WD/g$i"
     mkdir -p "$g/config" "$g/data"
     (umask 077 && head -c 16 /dev/urandom | od -An -tx1 | tr -d ' \n' >"$g/password")
-    env -i PATH="$PATH" HOME="$HOME" XDG_CONFIG_HOME="$g/config" NO_COLOR=1 \
+    env -i PATH="$PATH" HOME="$HOME" OC_GUARDIAN_CONFIG_DIR="$g/config" NO_COLOR=1 \
       "$OC_GUARDIAN" init --key-file "$g/operator.key" >"$WD/logs/g$i-init.log" 2>&1
     kit_env "$i"
     launch "guardian-g$i" "$WD/logs/g$i.log" "${KIT[@]}" fedimintd run --config "$WD/bin/fedimintd"
     gpids[i]=$LAST_PID
-    say "  g$i  operator $(cat "$g/config/oc-guardian/operator.id")  p2p :$(gport "$i" 0)  api :$(gport "$i" 1)  ui :$(gport "$i" 2)"
+    say "  g$i  operator $(cat "$g/config/operator.id")  p2p :$(gport "$i" 0)  api :$(gport "$i" 1)  ui :$(gport "$i" 2)"
   done
   for i in $(seq 0 $((GUARDIANS - 1))); do
     wait_for 120 "${gpids[i]}" "g$i's setup API" phase_is "$i" "no local params yet"
@@ -341,8 +341,7 @@ status() {
   [ -f "$WD/sessions" ] && prev="$(cat "$WD/sessions")"
   : >"$WD/sessions.new"
   for i in $(seq 0 $((GUARDIANS - 1))); do
-    # The kit prints its log lines on stdout too; keep its status line.
-    line="$(kit "$i" fedimintd status --config "$WD/bin/fedimintd" 2>&1 | sed -n 's/^fedimintd · //p')"
+    line="$(kit "$i" fedimintd status --config "$WD/bin/fedimintd" 2>/dev/null | sed -n 's/^fedimintd · //p')"
     say "  g$i  ${line:-kit status gave no answer}"
     read -r server online peers flagged count < <(cli dev api --peer-id "$i" status | python3 -I -c '
 import json, sys
