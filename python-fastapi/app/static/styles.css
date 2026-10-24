@@ -65,7 +65,9 @@ code {
 }
 
 .banner {
-    max-width: 44rem;
+    /* Lined up with main's text, so it never meets the screen's edge. */
+    width: calc(100% - 2rem);
+    max-width: 42rem;
     margin: 0 auto 0.5rem;
     padding: 0.75rem 1rem;
     background: var(--banner);
@@ -202,6 +204,11 @@ button.danger {
 button:disabled {
     opacity: 0.55;
     cursor: default;
+}
+
+input:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
 }
 
 .actions {
