@@ -11,6 +11,7 @@ import sqlite3
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import NamedTuple
+from urllib.parse import quote
 
 from fastapi import FastAPI, Form, HTTPException, Request
 from fastapi.responses import JSONResponse, RedirectResponse, Response
@@ -36,6 +37,7 @@ from .orangecheck_signin import (
     spend_token,
 )
 from .passwords import DECOY, check_password, hash_password
+from .safe_next import safe_next
 from .sessions import (
     DAYS_30,
     FRESH_SECONDS,
@@ -154,10 +156,6 @@ def fresh_enough(who: Who) -> bool:
 def connect_for(user: sqlite3.Row, linked: str | None) -> bool:
     """Connect is for people who came in through the site's own login."""
     return bool(user["password_hash"]) and not linked
-
-
-def safe_next(value: str | None) -> str:
-    return value if value and re.fullmatch(r"/[A-Za-z0-9/_-]*", value) else "/account"
 
 
 def back(path: str, error: str | None = None) -> RedirectResponse:
@@ -309,7 +307,9 @@ def reauth(request: Request, password: str = Form(""), next: str = Form("/accoun
     if not isinstance(who, Who):
         return back("/signin")
     if not who.user["password_hash"] or not check_password(password, who.user["password_hash"]):
-        return RedirectResponse(f"/reauth?next={safe_next(next)}&error=wrong_password", 303)
+        return RedirectResponse(
+            f"/reauth?next={quote(safe_next(next), safe='')}&error=wrong_password", 303
+        )
     response = back(safe_next(next))
     end_session(request, response)
     start_session(response, who.user["id"], "password", fresh=True)

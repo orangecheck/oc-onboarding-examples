@@ -5,16 +5,11 @@ import { type FormEvent, useState } from 'react';
 import { postJson, sentence } from '@/components/api';
 import { Layout, type ModeInfo } from '@/components/Layout';
 import { pageContext } from '@/lib/page-props';
+import { safeNext } from '@/lib/safe-next';
 
 interface Props {
     info: ModeInfo;
     next: string;
-}
-
-/** Only a path on this site, never another site's address. */
-function safeNext(v: unknown): string {
-    const s = typeof v === 'string' ? v : '';
-    return s.startsWith('/') && !s.startsWith('//') && !s.startsWith('/\\') ? s : '/account';
 }
 
 export const getServerSideProps: GetServerSideProps<Props> = async ({ req, query }) => {
