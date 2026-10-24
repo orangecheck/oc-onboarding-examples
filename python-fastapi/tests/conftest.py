@@ -35,9 +35,10 @@ def offline_site(monkeypatch):
 
 @pytest.fixture(autouse=True)
 def net(monkeypatch):
-    """Routes for httpx.post by URL. Anything else fails the test."""
+    """Routes for httpx.post and httpx.get by URL. Anything else fails the test."""
     calls: list[dict] = []
     routes: dict = {}
+    get_routes: dict = {}
 
     def post(url, *args, json=None, content=None, **kwargs):
         body = json if json is not None else (jsonlib.loads(content) if content else None)
@@ -48,11 +49,14 @@ def net(monkeypatch):
         raise AssertionError(f"unexpected POST {url}")
 
     def get(url, *args, **kwargs):
+        if url in get_routes:
+            status, answer = get_routes[url]
+            return httpx.Response(status, json=answer, request=httpx.Request("GET", url))
         raise AssertionError(f"unexpected GET {url}")
 
     monkeypatch.setattr(httpx, "post", post)
     monkeypatch.setattr(httpx, "get", get)
-    return SimpleNamespace(calls=calls, routes=routes)
+    return SimpleNamespace(calls=calls, routes=routes, get_routes=get_routes)
 
 
 def browser() -> TestClient:

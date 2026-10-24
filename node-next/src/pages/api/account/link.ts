@@ -13,13 +13,11 @@ export default post(
             return res.status(403).json({ ok: false, error: 'confirm_password_first' });
         }
         const s = req.ocSession!;
-        if (typeof s.rh !== 'string')
-            return res.status(401).json({ ok: false, error: 'no_handle' });
-        if (!s.exp || !spendToken(s.jti, s.exp)) {
+        if (!s.exp || !(await spendToken(s.jti, s.exp))) {
             return res.status(401).json({ ok: false, error: 'token_spent' });
         }
         const result = linkDid(who.user.id, s.did_oc);
-        await endTokenAtOrangecheck(token);
+        await endTokenAtOrangecheck(token, s.exp);
         if (result !== 'linked') return res.status(409).json({ ok: false, error: result });
         tellAccount(who.user, `orangecheck ${s.did_oc} was linked to your account.`);
         return res.status(200).json({ ok: true, did_oc: s.did_oc });

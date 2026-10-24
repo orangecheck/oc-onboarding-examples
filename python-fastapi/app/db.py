@@ -38,6 +38,12 @@ CREATE TABLE IF NOT EXISTS spent_tokens (
     jti TEXT PRIMARY KEY,
     exp INTEGER NOT NULL
 );
+-- Tokens ochk.io couldn't end yet, sent again on the next sign-in. Each is a
+-- live credential until it expires: keep this table as private as sessions.
+CREATE TABLE IF NOT EXISTS unended_tokens (
+    token TEXT PRIMARY KEY,
+    exp INTEGER NOT NULL
+);
 CREATE TABLE IF NOT EXISTS stand_in_connect (
     user_id TEXT PRIMARY KEY,
     did_oc TEXT NOT NULL UNIQUE,

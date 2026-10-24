@@ -10,16 +10,15 @@ import { userForFirstSignIn } from '@/lib/users';
 export default post(
     withSignInToken(async (req, res, token) => {
         const s = req.ocSession!;
-        const rh = typeof s.rh === 'string' ? s.rh : null;
-        // A session nothing could end: refuse it.
-        if (!rh) return res.status(401).json({ ok: false, error: 'no_handle' });
-        if (!s.exp || !s.iat || !spendToken(s.jti, s.exp)) {
+        // withOcAuth refused a token without rh: nothing could end its session.
+        const rh = s.rh!;
+        if (!s.exp || !s.iat || !(await spendToken(s.jti, s.exp))) {
             return res.status(401).json({ ok: false, error: 'token_spent' });
         }
         const aud = cfg().siteOrigin;
         const user = userForFirstSignIn(s.did_oc);
         startSession(res, user.id, 'orangecheck', { did_oc: s.did_oc, rh, aud, iat: s.iat });
-        await endTokenAtOrangecheck(token);
+        await endTokenAtOrangecheck(token, s.exp);
         return res.status(200).json({ ok: true });
     }),
 );

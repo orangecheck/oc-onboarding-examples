@@ -1,5 +1,6 @@
 import { randomBytes, randomUUID } from 'node:crypto';
 
+import { _resetJwksCachesForTests } from '@orangecheck/auth-core';
 import { exportJWK, generateKeyPair, SignJWT } from 'jose';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { vi } from 'vitest';
@@ -9,10 +10,12 @@ import { setEndedSessionsForTests } from '@/lib/sessions';
 
 // Calls the site's real routes with a real database (in memory), in offline
 // mode unless a test says otherwise. Sign-in tokens are signed here with a test
-// key; the issuer's key set is answered from it, so verifyOcToken runs for real.
+// key; the issuer's key set (the stand-in's, or ochk.io's in a live-mode test) is
+// answered from it, so verifyOcToken runs for real.
 
 export const ORIGIN = 'http://localhost:3000';
 export const ISSUER = `${ORIGIN}/stand-in`;
+export const LIVE_ISSUER = 'https://ochk.io';
 
 type Handler = (req: NextApiRequest, res: NextApiResponse) => unknown;
 
@@ -98,7 +101,7 @@ export async function token(
 
 export const did = (c: string) => `did:oc:${c.repeat(32).slice(0, 32)}`;
 
-/** Routes for fetch: the issuer's key set, plus whatever a test adds. Anything else fails. */
+/** Routes for fetch: whatever a test adds, then the issuers' key sets. Anything else fails. */
 export async function stubFetch(
     extra: Record<string, (init: RequestInit) => Response | Promise<Response>> = {},
 ) {
@@ -113,9 +116,13 @@ export async function stubFetch(
         const url =
             typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
         calls.push({ url, body: init.body ? JSON.parse(String(init.body)) : null });
-        if (url === `${ISSUER}/.well-known/jwks.json`) return Response.json({ keys: [jwk] });
         const route = extra[url];
         if (route) return route(init);
+        if (
+            url === `${ISSUER}/.well-known/jwks.json` ||
+            url === `${LIVE_ISSUER}/.well-known/jwks.json`
+        )
+            return Response.json({ keys: [jwk] });
         throw new Error(`unexpected fetch ${url}`);
     });
     return calls;
@@ -135,4 +142,5 @@ export function offlineSite(): void {
     process.env.SITE_ORIGIN = ORIGIN;
     resetDbForTests();
     setEndedSessionsForTests(undefined);
+    _resetJwksCachesForTests();
 }

@@ -1,14 +1,16 @@
 """Each test checks a rule from the quickstart's checklist (ochk.io/docs/me/quickstart)
 or the Connect docs (ochk.io/docs/connect), through the site's real routes."""
 
+import time
+from types import SimpleNamespace
+
 import pytest
-from orangecheck import BondRequired, InvalidSession, RevocationList
+from orangecheck import RevocationList
 
-from app import db, sessions
+from app import db, orangecheck_signin, sessions, stand_in
 from app.config import assert_deployable
-from app.orangecheck_signin import refusal
 
-from .conftest import ORIGIN, PASSWORD, bearer, browser, did, reauthed, signed_up, users
+from .conftest import ORIGIN, PASSWORD, bearer, browser, did, reauthed, signed_up, token, users
 
 PROVISION = "https://ochk.io/api/connect/provision"
 
@@ -126,7 +128,7 @@ def test_a_token_starts_one_session_once():
 
 def test_a_token_without_rh_is_refused_and_starts_nothing():
     r = browser().post("/api/auth/orangecheck", headers=bearer(did("a"), rh=None))
-    assert r.status_code == 401
+    assert r.status_code == 401 and r.json()["reason"] == "no_session_handle"
     assert "site_session" not in r.cookies
     assert users() == []
 
@@ -135,7 +137,7 @@ def test_a_token_issued_to_another_site_is_refused():
     r = browser().post(
         "/api/auth/orangecheck", headers=bearer(did("a"), aud="https://other.example")
     )
-    assert r.status_code == 401 and r.json()["error"] == "audience"
+    assert r.status_code == 401 and r.json()["reason"] == "unauthenticated"
     assert users() == []
 
 
@@ -153,23 +155,97 @@ def test_the_stand_in_issues_tokens_offline_only(monkeypatch):
     assert browser().post("/stand-in/token", json={"name": "Ada"}).status_code == 404
 
 
-@pytest.mark.parametrize(
-    ("reason", "status"),
-    [
-        ("revocations_unavailable", 503),
-        ("key_set_unavailable", 503),
-        ("bond_policy_unavailable", 503),
-        ("ended", 401),
-        ("audience", 401),
-    ],
-)
-def test_an_outage_is_never_signed_out(reason, status):
-    assert refusal(InvalidSession(reason))[0] == status
+def test_offline_nothing_goes_to_ochk_io(net):
+    assert browser().post("/api/auth/orangecheck", headers=bearer(did("a"))).status_code == 200
+    assert net.calls == []
 
 
-def test_an_unbacked_account_is_sent_to_back_it():
-    status, body = refusal(BondRequired({"min_sats": 1, "min_days": 1}, None))
-    assert status == 403 and body["back_url"].startswith("https://ochk.app/")
+# ---- sign in with orangecheck, live ----
+
+REVOKE = "https://ochk.io/api/auth/revoke"
+RULE = "https://me.ochk.io/api/integrator/pk_test_example/sign-in"
+
+
+@pytest.fixture
+def live(monkeypatch, net):
+    """Live mode. Only the keys are the stand-in's: everything else is passed as live mode
+    passes it, the project's rule included."""
+    monkeypatch.setenv("OC_PROJECT_KEY", "pk_test_example")
+    monkeypatch.setattr(orangecheck_signin, "_policy", None)
+    real = orangecheck_signin.check_oc_session
+    seen: dict = {}
+
+    def check(t, audience, **kwargs):
+        seen.update(kwargs)
+        return real(t, audience, jwks=stand_in.jwks(), issuer=stand_in.issuer(), **kwargs)
+
+    monkeypatch.setattr(orangecheck_signin, "check_oc_session", check)
+    net.get_routes[RULE] = (200, {"ok": True, "require_bond": None})
+    net.routes[REVOKE] = (200, {"ok": True, "revoked": 1})
+    return SimpleNamespace(net=net, seen=seen)
+
+
+def live_sign_in(d: str, status: int = 200) -> str:
+    t = token(d)
+    r = browser().post("/api/auth/orangecheck", headers={"authorization": f"Bearer {t}"})
+    assert r.status_code == status, r.text
+    return t
+
+
+def sent(net) -> list[list[str]]:
+    return [c["body"]["tokens"] for c in net.calls if c["url"] == REVOKE]
+
+
+def waiting() -> list[str]:
+    return [r[0] for r in db.db().execute("SELECT token FROM unended_tokens")]
+
+
+def test_live_a_sign_in_is_held_to_the_rule_and_ends_its_token(live):
+    t = live_sign_in(did("a"))
+    assert live.seen["method"] == "POST" and live.seen["policy"] is not None
+    assert sent(live.net) == [[t]] and waiting() == []
+
+
+@pytest.mark.parametrize("status", [503, 429])
+def test_live_a_token_ochk_io_couldnt_take_goes_with_the_next_sign_in(live, status):
+    live.net.routes[REVOKE] = (status, {})
+    first = live_sign_in(did("a"))
+    assert waiting() == [first]
+    live.net.routes[REVOKE] = (200, {"ok": True, "revoked": 2})
+    second = live_sign_in(did("b"))
+    assert sent(live.net) == [[first], [second, first]] and waiting() == []
+
+
+def test_live_a_refused_call_leaves_nothing_waiting(live):
+    live.net.routes[REVOKE] = (503, {})
+    live_sign_in(did("a"))
+    live.net.routes[REVOKE] = (400, {})
+    live_sign_in(did("b"))
+    assert waiting() == []
+
+
+def test_live_an_expired_token_is_not_sent_again(live):
+    db.db().execute(
+        "INSERT INTO unended_tokens (token, exp) VALUES (?, ?)", ("old", int(time.time()))
+    )
+    t = live_sign_in(did("a"))
+    assert sent(live.net) == [[t]] and waiting() == []
+
+
+def test_live_an_outage_is_never_signed_out(live):
+    sessions.set_ended_sessions_for_tests(EndedList("unverified"))
+    t = token(did("a"))
+    r = browser().post("/api/auth/orangecheck", headers={"authorization": f"Bearer {t}"})
+    assert r.status_code == 503 and r.json()["reason"] == "revocations_unavailable"
+    assert users() == []
+
+
+def test_live_an_unbacked_account_is_sent_to_back_it(live):
+    live.net.get_routes[RULE] = (200, {"ok": True, "require_bond": {"min_sats": 1, "min_days": 1}})
+    t = token(did("a"))
+    r = browser().post("/api/auth/orangecheck", headers={"authorization": f"Bearer {t}"})
+    assert r.status_code == 403 and r.json()["back_url"].startswith("https://ochk.app/")
+    assert users() == []
 
 
 # ---- linking orangecheck to an account with its own login ----
@@ -226,6 +302,9 @@ class EndedList:
 
     def status(self, rh, aud, iat):
         assert aud == ORIGIN and rh and iat  # the session's own handle, this site's origin
+        return self.answer
+
+    def status_for(self, claims):  # what verify_session asks, for the token itself
         return self.answer
 
 

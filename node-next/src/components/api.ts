@@ -10,9 +10,11 @@ const SENTENCES: Record<string, string> = {
     did_taken: 'That orangecheck account is linked to another account here.',
     already_linked: 'This account already has orangecheck linked.',
     token_spent: 'That sign-in was used already. Try again.',
-    no_handle: 'That sign-in can’t be ended, so it isn’t accepted. Try again.',
     no_session_handle: 'That sign-in can’t be ended, so it isn’t accepted. Try again.',
+    unauthenticated: 'That sign-in didn’t check out. Try again.',
     revocations_unavailable: 'orangecheck can’t be reached just now. Try again in a minute.',
+    key_set_unavailable: 'orangecheck can’t be reached just now. Try again in a minute.',
+    bond_policy_unavailable: 'orangecheck can’t be reached just now. Try again in a minute.',
     connect_unavailable:
         'orangecheck can’t be reached just now, so nothing was deleted. Try again.',
     holds_earnings: 'Your orangecheck account holds earnings, so it stays. Claim it first.',

@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { assertDeployable } from '@/lib/config';
-import { db } from '@/lib/db';
+import { db, now } from '@/lib/db';
 import { setEndedSessionsForTests } from '@/lib/sessions';
 import deleteAccount from '@/pages/api/account/delete';
 import link from '@/pages/api/account/link';
@@ -15,7 +15,7 @@ import signup from '@/pages/api/signup';
 import standInClaim from '@/pages/api/stand-in/claim';
 import standInToken from '@/pages/api/stand-in/token';
 
-import { Browser, did, offlineSite, stubFetch, token } from './harness';
+import { Browser, did, ISSUER, LIVE_ISSUER, offlineSite, stubFetch, token } from './harness';
 
 const PASSWORD = 'correct horse battery';
 
@@ -131,6 +131,14 @@ describe('sign in with orangecheck', () => {
         expect(users()[0]).toMatchObject({ email: null, password_hash: null });
     });
 
+    it('offline, nothing goes to ochk.io', async () => {
+        const calls = await stubFetch();
+        expect(
+            (await new Browser().call(signInWithOrangecheck, await bearer(did('a')))).status,
+        ).toBe(200);
+        expect(calls.filter((c) => !c.url.startsWith(ISSUER))).toEqual([]);
+    });
+
     it('a token starts one session, once', async () => {
         const t = await bearer(did('a'));
         expect((await new Browser().call(signInWithOrangecheck, t)).status).toBe(200);
@@ -144,8 +152,7 @@ describe('sign in with orangecheck', () => {
             signInWithOrangecheck,
             await bearer(did('a'), { rh: null }),
         );
-        // me-client 0.40 refuses it itself (no_session_handle); this site refuses it either way.
-        expect(r.status).toBe(401);
+        expect(r).toMatchObject({ status: 401, body: { reason: 'no_session_handle' } });
         expect(r.cookie).toBeNull();
         expect(users()).toHaveLength(0);
     });
@@ -156,6 +163,15 @@ describe('sign in with orangecheck', () => {
             await bearer(did('a'), { aud: 'https://other.example' }),
         );
         expect(r.status).toBe(401);
+        expect(users()).toHaveLength(0);
+    });
+
+    it('while ochk.io’s keys can’t be read, sign-in says try again, never "signed out"', async () => {
+        await stubFetch({
+            [`${ISSUER}/.well-known/jwks.json`]: () => new Response('', { status: 503 }),
+        });
+        const r = await new Browser().call(signInWithOrangecheck, await bearer(did('a')));
+        expect(r).toMatchObject({ status: 503, body: { reason: 'key_set_unavailable' } });
         expect(users()).toHaveLength(0);
     });
 
@@ -174,6 +190,72 @@ describe('sign in with orangecheck', () => {
         expect((await new Browser().call(standInToken, { body: { name: 'Ada' } })).status).toBe(
             404,
         );
+    });
+});
+
+describe('sign in with orangecheck, live: ending the token at ochk.io', () => {
+    const REVOKE = `${LIVE_ISSUER}/api/auth/revoke`;
+    let answer: () => Response;
+    let calls: Awaited<ReturnType<typeof stubFetch>>;
+
+    beforeEach(async () => {
+        process.env.OC_PROJECT_KEY = 'pk_test_example';
+        answer = () => Response.json({ ok: true, revoked: 1 });
+        calls = await stubFetch({
+            'https://me.ochk.io/api/integrator/pk_test_example/sign-in': () =>
+                Response.json({ ok: true, require_bond: null }),
+            [REVOKE]: () => answer(),
+        });
+        vi.spyOn(console, 'warn').mockImplementation(() => {});
+    });
+
+    async function signIn(d: string) {
+        const t = await token(d, { iss: LIVE_ISSUER });
+        const r = await new Browser().call(signInWithOrangecheck, {
+            headers: { authorization: `Bearer ${t}` },
+        });
+        expect(r.status).toBe(200);
+        return t;
+    }
+    const sent = () =>
+        calls.filter((c) => c.url === REVOKE).map((c) => (c.body as { tokens: string[] }).tokens);
+    const waiting = () =>
+        (db().prepare('SELECT token FROM unended_tokens').all() as Array<{ token: string }>).map(
+            (r) => r.token,
+        );
+
+    it('a sign-in ends its token there', async () => {
+        const t = await signIn(did('a'));
+        expect(sent()).toEqual([[t]]);
+        expect(waiting()).toEqual([]);
+    });
+
+    it.each([503, 429])(
+        'a token ochk.io couldn’t take (%i) goes with the next sign-in, then is dropped',
+        async (status) => {
+            answer = () => new Response('', { status });
+            const first = await signIn(did('a'));
+            expect(waiting()).toEqual([first]);
+            answer = () => Response.json({ ok: true, revoked: 2 });
+            const second = await signIn(did('b'));
+            expect(sent()).toEqual([[first], [second, first]]);
+            expect(waiting()).toEqual([]);
+        },
+    );
+
+    it('a refused call (400) leaves nothing waiting', async () => {
+        answer = () => new Response('', { status: 503 });
+        await signIn(did('a'));
+        answer = () => new Response('', { status: 400 });
+        await signIn(did('b'));
+        expect(waiting()).toEqual([]);
+    });
+
+    it('an expired token is not sent again', async () => {
+        db().prepare('INSERT INTO unended_tokens (token, exp) VALUES (?, ?)').run('old', now());
+        const t = await signIn(did('a'));
+        expect(sent()).toEqual([[t]]);
+        expect(waiting()).toEqual([]);
     });
 });
 

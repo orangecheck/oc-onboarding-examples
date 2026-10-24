@@ -19,7 +19,6 @@ from fastapi.templating import Jinja2Templates
 from orangecheck import (
     CONNECT_CONSENT_BLURB,
     CONNECT_CONSENT_LABEL,
-    InvalidSession,
     InvalidWebhook,
     verify_webhook,
 )
@@ -32,10 +31,9 @@ from .db import now
 from .orangecheck_signin import (
     SignInNotConfigured,
     bearer,
+    check_sign_in_token,
     end_token_at_orangecheck,
-    refusal,
     spend_token,
-    verify_sign_in_token,
 )
 from .passwords import DECOY, check_password, hash_password
 from .sessions import (
@@ -354,12 +352,12 @@ def claim_link(request: Request):
 
 def _token_or_refusal(request: Request):
     try:
-        return verify_sign_in_token(bearer(request))
+        checked = check_sign_in_token(request)
     except SignInNotConfigured:
         return api_error(503, "sign_in_not_configured")
-    except InvalidSession as e:
-        status, body = refusal(e)
-        return JSONResponse(body, status_code=status)
+    if not checked.ok:
+        return JSONResponse(checked.body, status_code=checked.status)
+    return checked.session
 
 
 @app.post("/api/auth/orangecheck")
@@ -368,8 +366,8 @@ def sign_in_with_orangecheck(request: Request):
     s = _token_or_refusal(request)
     if isinstance(s, Response):
         return s
-    # verify_session refused a token without rh (require_handle is on by default).
-    rh = s.claims["rh"]
+    # check_oc_session refused a token without rh (require_handle is on by default).
+    rh = s.rh
     if not s.iat or not spend_token(s.jti, s.exp):
         return api_error(401, "token_spent")
     user = user_for_first_sign_in(s.did_oc)
@@ -377,7 +375,7 @@ def sign_in_with_orangecheck(request: Request):
     start_session(
         response, user["id"], "orangecheck", OcClaims(s.did_oc, rh, cfg().site_origin, s.iat)
     )
-    end_token_at_orangecheck(bearer(request))
+    end_token_at_orangecheck(bearer(request), s.exp)
     return response
 
 
@@ -399,7 +397,7 @@ def link(request: Request):
     if not spend_token(s.jti, s.exp):
         return api_error(401, "token_spent")
     result = link_did(who.user["id"], s.did_oc)
-    end_token_at_orangecheck(bearer(request))
+    end_token_at_orangecheck(bearer(request), s.exp)
     if result != "linked":
         return api_error(409, result)
     tell_account(who.user, f"orangecheck {s.did_oc} was linked to your account.")

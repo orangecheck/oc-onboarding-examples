@@ -1,4 +1,10 @@
-import { withOcAuth, type WithOcSession } from '@orangecheck/me-client/server';
+import {
+    type JtiStore,
+    revokeToken,
+    spendOnce,
+    withOcAuth,
+    type WithOcSession,
+} from '@orangecheck/me-client/server';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 import { cfg } from './config';
@@ -40,36 +46,42 @@ export function withSignInToken(handler: TokenHandler) {
     };
 }
 
-/**
- * Spend a token: it starts one session, once, on any server that shares this
- * table, until it expires. False when it was spent already.
- */
-export function spendToken(jti: string, exp: number): boolean {
-    db().prepare('DELETE FROM spent_tokens WHERE exp < ?').run(now());
-    try {
-        db().prepare('INSERT INTO spent_tokens (jti, exp) VALUES (?, ?)').run(jti, exp);
-        return true;
-    } catch {
-        return false;
-    }
+// Every server that accepts sign-ins shares this table, so a token starts one
+// session, once, until it expires.
+const spentTokens: JtiStore = {
+    add(jti, exp) {
+        db().prepare('DELETE FROM spent_tokens WHERE exp <= ?').run(now());
+        const r = db()
+            .prepare('INSERT OR IGNORE INTO spent_tokens (jti, exp) VALUES (?, ?)')
+            .run(jti, exp);
+        return r.changes === 1;
+    },
+};
+
+/** False when the token was spent already, or has expired. */
+export function spendToken(jti: string, exp: number): Promise<boolean> {
+    return spendOnce(jti, exp, spentTokens);
 }
 
 /**
  * End the token at the auth host once the site's own session has taken over,
  * so me.ochk.io refuses it from then on (ochk.io/docs/me/sdk#ending-a-session).
- * Holding a token is the authority to end it; nothing else is sent.
+ * A token ochk.io couldn't take right now waits in unended_tokens until the
+ * next sign-in sends it again, or until it expires.
  */
-export async function endTokenAtOrangecheck(token: string): Promise<void> {
-    if (cfg().mode !== 'live' || !token) return;
-    try {
-        await fetch('https://ochk.io/api/auth/revoke', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ tokens: [token] }),
-            signal: AbortSignal.timeout(5000),
-        });
-    } catch (e) {
-        // The token was spent here already; ending it at the host is belt and braces.
-        console.warn('[orangecheck] could not end the token at ochk.io:', (e as Error).message);
+export async function endTokenAtOrangecheck(token: string, exp: number): Promise<void> {
+    if (cfg().mode !== 'live') return;
+    db().prepare('DELETE FROM unended_tokens WHERE exp <= ?').run(now());
+    const waiting = (
+        db().prepare('SELECT token FROM unended_tokens LIMIT 7').all() as Array<{ token: string }>
+    ).map((r) => r.token);
+    const result = await revokeToken([token, ...waiting]);
+    if (result.ok || result.reason === 'bad_request') {
+        const drop = db().prepare('DELETE FROM unended_tokens WHERE token = ?');
+        for (const t of waiting) drop.run(t);
+        if (!result.ok) console.warn('[orangecheck] ochk.io refused to end the tokens (400)');
+        return;
     }
+    db().prepare('INSERT OR IGNORE INTO unended_tokens (token, exp) VALUES (?, ?)').run(token, exp);
+    console.warn(`[orangecheck] could not end the token at ochk.io (${result.reason}); queued`);
 }

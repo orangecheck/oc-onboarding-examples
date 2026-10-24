@@ -1,14 +1,13 @@
 """Sign in with orangecheck (ochk.io/docs/me/quickstart). The page sends the popup's
-token once, as a Bearer header. verify_session checks its signature, issuer and this
-site's exact origin as audience, refuses a token without rh, and holds it to the
-project's "who can sign in" rule. The site's own session then takes over."""
+token once, as a Bearer header. check_oc_session checks its signature, issuer and this
+site's exact origin as audience, refuses a token without rh, holds it to the project's
+"who can sign in" rule, and gives the HTTP answer for any refusal. The site's own
+session then takes over."""
 
 import logging
-import sqlite3
 
-import httpx
 from fastapi import Request
-from orangecheck import BondRequired, InvalidSession, Session, SignInPolicy, verify_session
+from orangecheck import SessionCheck, SignInPolicy, check_oc_session, revoke_token, spend_once
 
 from . import stand_in
 from .config import cfg
@@ -16,9 +15,6 @@ from .db import db, now
 from .sessions import ended_sessions
 
 log = logging.getLogger("site")
-
-# An outage is never "signed out": the page says try again.
-UNAVAILABLE = {"revocations_unavailable", "key_set_unavailable", "bond_policy_unavailable"}
 
 _policy: SignInPolicy | None = None
 
@@ -39,16 +35,17 @@ class SignInNotConfigured(Exception):
     pass
 
 
-def verify_sign_in_token(token: str) -> Session:
-    """The verified token, or InvalidSession. Offline, the stand-in's key set is passed in:
-    `issuer=` alone does not move where the SDK fetches keys from."""
+def check_sign_in_token(request: Request) -> SessionCheck:
+    """The request's token, checked. Offline, the stand-in's key set is passed in."""
     c = cfg()
     if c.mode == "offline":
-        return verify_session(token, c.site_origin, jwks=stand_in.jwks(), issuer=stand_in.issuer())
+        return check_oc_session(
+            bearer(request), c.site_origin, jwks=stand_in.jwks(), issuer=stand_in.issuer()
+        )
     if not c.project_key:
         raise SignInNotConfigured()
-    return verify_session(
-        token,
+    return check_oc_session(
+        bearer(request),
         c.site_origin,
         revocations=ended_sessions(),
         policy=_sign_in_policy(),
@@ -56,33 +53,36 @@ def verify_sign_in_token(token: str) -> Session:
     )
 
 
-def refusal(e: InvalidSession) -> tuple[int, dict]:
-    """InvalidSession to an HTTP answer. The SDK leaves this mapping to you."""
-    if e.reason in UNAVAILABLE:
-        return 503, {"ok": False, "error": e.reason}
-    if isinstance(e, BondRequired):
-        return 403, {"ok": False, "error": "bond_required", "back_url": e.back_url}
-    return 401, {"ok": False, "error": e.reason}
+class SpentTokens:
+    """Every server that accepts sign-ins shares this table, so a token starts one
+    session, once, until it expires."""
+
+    def add(self, jti: str, exp: int) -> bool:
+        db().execute("DELETE FROM spent_tokens WHERE exp <= ?", (now(),))
+        cur = db().execute(
+            "INSERT OR IGNORE INTO spent_tokens (jti, exp) VALUES (?, ?)", (jti, exp)
+        )
+        return cur.rowcount == 1
 
 
 def spend_token(jti: str, exp: int) -> bool:
-    """Spend a token: it starts one session, once, on any server that shares this table,
-    until it expires. False when it was spent already."""
-    db().execute("DELETE FROM spent_tokens WHERE exp < ?", (now(),))
-    try:
-        db().execute("INSERT INTO spent_tokens (jti, exp) VALUES (?, ?)", (jti, exp))
-        return True
-    except sqlite3.IntegrityError:
-        return False
+    """False when the token was spent already, or has expired."""
+    return spend_once(jti, exp, SpentTokens())
 
 
-def end_token_at_orangecheck(token: str) -> None:
+def end_token_at_orangecheck(token: str, exp: int) -> None:
     """End the token at the auth host once the site's own session has taken over
-    (ochk.io/docs/me/sdk#ending-a-session). Holding a token is the authority to end it."""
-    if cfg().mode != "live" or not token:
+    (ochk.io/docs/me/sdk#ending-a-session). A token ochk.io couldn't take right now waits
+    in unended_tokens until the next sign-in sends it again, or until it expires."""
+    if cfg().mode != "live":
         return
-    try:
-        httpx.post("https://ochk.io/api/auth/revoke", json={"tokens": [token]}, timeout=5)
-    except httpx.HTTPError as e:
-        # The token was spent here already; ending it at the host is belt and braces.
-        log.warning("could not end the token at ochk.io: %s", e)
+    db().execute("DELETE FROM unended_tokens WHERE exp <= ?", (now(),))
+    waiting = [r[0] for r in db().execute("SELECT token FROM unended_tokens LIMIT 7")]
+    result = revoke_token([token, *waiting])
+    if result.ok or result.reason == "bad_request":
+        db().executemany("DELETE FROM unended_tokens WHERE token = ?", [(t,) for t in waiting])
+        if not result.ok:
+            log.warning("ochk.io refused to end the tokens (400)")
+        return
+    db().execute("INSERT OR IGNORE INTO unended_tokens (token, exp) VALUES (?, ?)", (token, exp))
+    log.warning("could not end the token at ochk.io (%s); queued", result.reason)

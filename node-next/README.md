@@ -81,11 +81,12 @@ How the sign-in works:
 - The popup hands the page a token bound to this site's origin.
 - The page sends it once, as a Bearer header.
 - The server checks it with `withOcAuth`, which also applies the project's "who
-  can sign in" rule.
-- The server refuses a token without a revocation handle (`rh`), and spends the
-  token so it starts one session only.
+  can sign in" rule and refuses a token without a revocation handle (`rh`). While
+  ochk.io's keys can't be read, it answers 503, never "signed out".
+- The server spends the token with `spendOnce`, so it starts one session only.
 - It then starts the site's own session, which keeps the token's `rh`, `aud` and
-  `iat`, and ends the token at ochk.io.
+  `iat`, and ends the token at ochk.io with `revokeToken`. A token ochk.io can't
+  take just then waits in `unended_tokens`, and goes with the next sign-in.
 
 From then on, every request on that session asks the list of ended sessions. If
 the person ended the session everywhere, they are signed out here too. If the list
@@ -103,6 +104,7 @@ or [the Connect docs](https://ochk.io/docs/connect):
 
 - a token starts one session, once;
 - a token without `rh`, for another site, or from another site is refused;
+- a token ochk.io couldn't end is sent again, and an expired one is not;
 - an unticked box makes no call to Connect, and only a tick sends `consent`;
 - linking and unlinking wait for a fresh sign-in with the password;
 - an account that earned is not deleted, and its person gets a claim link;
@@ -121,6 +123,8 @@ The database is one SQLite file in `.data/`, so this runs as-is on one server wi
 a disk. On serverless hosting, or on more than one server, move the tables in
 `src/lib/db.ts` to your own database. The table of spent tokens must be one table
 that every server shares, or a token could start a session on each.
+`unended_tokens` holds live tokens until they expire: keep it as private as the
+sessions.
 
 ## License
 
