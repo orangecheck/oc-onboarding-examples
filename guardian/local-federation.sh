@@ -12,16 +12,16 @@
 # kernel's ephemeral range, where any outgoing connection could take one.
 # To skip a download, point these at binaries you have already verified:
 #   BITCOIND, BITCOIN_CLI    Bitcoin Core's bitcoind and bitcoin-cli
-#   OC_GUARDIAN              oc-guardian 0.2.8
+#   OC_GUARDIAN              oc-guardian, the release pinned below
 #   FEDIMINTD_BUNDLE         the fedimintd 0.11.4 release file (its pinned sha256 is still checked)
 #   FEDIMINT_CLI_BUNDLE      the fedimint-cli 0.11.4 release file (its pinned sha256 is still checked)
 # PEGIN_BTC (default 0.01) is the amount pegin deposits.
 set -euo pipefail
 
-KIT_VERSION=0.2.8
+# The kit release and its x86_64 Linux tarball's sha256, together on one line: a new release changes only this line.
+KIT_VERSION=0.2.9 KIT_SHA256=a47528315b5a79bd1b7684fac05acf815594252ef87c19b6628899d4ab635aa0
 KIT_REPO=orangecheck/oc-guardian-kit
 KIT_TARGET=x86_64-unknown-linux-gnu
-KIT_SHA256=4eba86436914094e7a6ea45ed9cfe8c51b2545e41cc1ec769de9e1e5f080445e
 FEDIMINT_VERSION=0.11.4
 # The kit pins this in install.rs; it matches GitHub's published digest.
 FEDIMINTD_SHA256=52b36e81d7bab75c2e3f243566c1ad3dffe4978120d433cc96f1a5d51f62451a

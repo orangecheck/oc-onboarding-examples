@@ -2,8 +2,9 @@
 
 A local, throwaway Fedimint federation of four guardians on Bitcoin regtest, run
 with orangecheck's guardian kit,
-[`oc-guardian`](https://github.com/orangecheck/oc-guardian-kit) 0.2.8. It is for
-learning how a guardian runs: the kit, the key ceremony, consensus and a deposit.
+[`oc-guardian`](https://github.com/orangecheck/oc-guardian-kit), at the release
+pinned at the top of `local-federation.sh`. It is for learning how a guardian
+runs: the kit, the key ceremony, consensus and a deposit.
 Everything listens on 127.0.0.1, nothing joins any federation of orangecheck's,
 and `down` stops all of it.
 
@@ -55,7 +56,7 @@ Every pinned sha256 is still checked.
 1. **Downloads and checks each binary against a pinned sha256**, each in its own
    new directory:
    - Bitcoin Core 31.1, also against its signed `SHA256SUMS`;
-   - `oc-guardian` 0.2.8, also against its release `.sha256` and, with `gh`, its
+   - `oc-guardian`, also against its release `.sha256` and, with `gh`, its
      build provenance attestation;
    - `fedimintd` 0.11.4, installed by the kit itself (`oc-guardian fedimintd
      install`), which checks its own pin;
