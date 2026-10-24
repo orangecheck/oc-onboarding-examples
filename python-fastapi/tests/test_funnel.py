@@ -1,6 +1,7 @@
 """Each test checks a rule from the quickstart's checklist (ochk.io/docs/me/quickstart)
 or the Connect docs (ochk.io/docs/connect), through the site's real routes."""
 
+import re
 import time
 from types import SimpleNamespace
 
@@ -404,10 +405,43 @@ def test_the_domain_token_is_in_the_html_the_check_reads(monkeypatch):
     assert '<meta name="oc-domain-verify" content="tok_123" />' in browser().get("/").text
 
 
-def test_pages_load_the_popup_as_a_module_from_this_site_only():
+def test_the_orangecheck_button_keeps_its_mark_and_says_orangecheck(monkeypatch):
+    b = reauthed(signed_up())
+    pages = {"sign-in": browser().get("/signin").text, "link": b.get("/account").text}
+    monkeypatch.setenv("OC_PROJECT_KEY", "pk_test_example")
+    pages["sign-in, live"] = browser().get("/signin").text
+    for name, html in pages.items():
+        buttons = re.findall(r"<button\b([^>]*\bdata-oc-sign-in\b[^>]*)>(.*?)</button>", html, re.S)
+        assert len(buttons) == 1, name
+        attributes, inside = buttons[0]
+        assert 'class="oc"' in attributes, name
+        # The placeholder the SDK draws the mark into, first; then the words.
+        words = re.fullmatch(r"\s*<span data-oc-mark></span>([^<]+)", inside)
+        assert words, (name, inside)
+        assert re.search(r"(^|\W)orangecheck(\W|$)", words[1].strip()), (name, words[1])
+
+
+def test_pages_load_the_button_pinned_and_checked_and_their_own_script_from_this_site(
+    monkeypatch,
+):
+    offline = browser().get("/signin")
+    assert "button-auto.mjs" not in offline.text
+    monkeypatch.setenv("OC_PROJECT_KEY", "pk_test_example")
     r = browser().get("/signin")
     assert r.headers["cross-origin-opener-policy"] == "same-origin-allow-popups"
-    assert "script-src 'self'" in r.headers["content-security-policy"]
+    csp = r.headers["content-security-policy"]
+    tags = re.findall(
+        r'<(?:script|link)\b[^>]*?(?:src|href)="(https://[^"]+)"\s+integrity="(sha384-[^"]+)"'
+        r'\s+crossorigin="anonymous"',
+        r.text,
+    )
+    assert [url.rsplit("/", 1)[1] for url, _ in tags] == ["button.css", "button-auto.mjs"]
+    for url, _ in tags:
+        assert url in csp
+    # The copy offline mode loads is the same version as the tags.
+    version = re.search(r"/me-client@([\d.]+)/", tags[0][0])[1]
+    copy = browser().get("/static/button.mjs")
+    assert copy.text.startswith(f"// @orangecheck/me-client {version} dist/button.mjs")
     js = browser().get("/static/orangecheck.mjs")
     assert js.headers["content-type"].startswith("text/javascript")
 

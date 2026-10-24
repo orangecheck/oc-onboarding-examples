@@ -78,6 +78,12 @@ project has one development origin, and going live clears it.
 
 How the sign-in works:
 
+- The button is the SDK's `SignInWithOrangecheck` (`@orangecheck/me-client/react`)
+  with this site's own button class. Its default `inherit` appearance adds the
+  orangecheck mark, in the button's text colour, and nothing else: the site's CSS
+  styles it. `@orangecheck/me-client/button.css` sizes the mark and the target.
+  The rules for its words and the mark are at
+  [ochk.io/docs/integration/sign-in-button](https://ochk.io/docs/integration/sign-in-button).
 - The popup hands the page a token bound to this site's origin.
 - The page sends it once, as a Bearer header.
 - The server checks it with `withOcAuth`, which also applies the project's "who

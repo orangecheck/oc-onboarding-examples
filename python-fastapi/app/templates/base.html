@@ -6,9 +6,15 @@
     <meta name="robots" content="noindex" />
     {% if domain_verify %}<meta name="oc-domain-verify" content="{{ domain_verify }}" />{% endif %}
     <title>{% block title %}{% endblock %} · Example site</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@orangecheck/me-client@0.48.0/dist/button.css"
+      integrity="sha384-gfzUacSwvkf2ls9b6CLLW8yMUz1VNIrCvGFLsyknbCc2X0i9Ey63C+y13T6VeSTx"
+      crossorigin="anonymous"
+    />
     <link rel="stylesheet" href="/static/styles.css" />
   </head>
-  <body>
+  <body data-mode="{{ mode }}">
     <header class="top">
       <a href="/" class="brand">Example site</a>
       <nav>
@@ -28,6 +34,14 @@
     </p>
     {% endif %}
     <main>{% block main %}{% endblock %}</main>
+    {% if mode != "offline" %}
+    <script
+      type="module"
+      src="https://cdn.jsdelivr.net/npm/@orangecheck/me-client@0.48.0/dist/button-auto.mjs"
+      integrity="sha384-56N4iJCuEcF8FKyiJSP7Z2xqHPFw59nFT/Mc6siqQHMm3ju1kN7U+XiWjJKQixV0"
+      crossorigin="anonymous"
+    ></script>
+    {% endif %}
     <script type="module" src="/static/orangecheck.mjs"></script>
   </body>
 </html>

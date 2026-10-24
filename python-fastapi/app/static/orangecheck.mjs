@@ -1,7 +1,11 @@
-// The page's only script. Buttons marked data-orangecheck open orangecheck's sign-in
-// popup (offline, the stand-in at /stand-in/popup) and send the token it hands back
-// to their endpoint, once, as a Bearer header. The token is never kept in the page.
-import { signInWithOcOutcome } from './popup.mjs';
+// The page's only script of its own. Each button[data-oc-sign-in] is orangecheck's
+// button: live, button-auto.mjs (loaded by base.html from jsDelivr, pinned, with
+// Subresource Integrity) draws the mark and opens orangecheck's sign-in popup;
+// offline, the copy of the SDK's button.mjs next to this file does the same against
+// the stand-in at /stand-in/popup. Either way the button reports through the same two
+// events, and this file sends the token to the button's endpoint, once, as a Bearer
+// header. The token is never kept in the page, and the server's check is the only
+// answer: any script on a page can fire these events.
 
 const SENTENCES = {
     confirm_password_first: 'Confirm your password first.',
@@ -18,37 +22,32 @@ const SENTENCES = {
 };
 const sentence = (code) => SENTENCES[code] || 'Something went wrong. Try again.';
 
-for (const button of document.querySelectorAll('[data-orangecheck]')) {
+const say = (button, text) => {
     const error = button.parentElement.querySelector('.error');
-    const label = button.textContent;
-    const say = (text) => {
-        error.textContent = text;
-        error.hidden = !text;
-    };
-    button.addEventListener('click', async () => {
-        button.disabled = true;
-        button.textContent = 'Waiting for orangecheck…';
-        say('');
-        const offline = button.dataset.offline === 'true';
-        const outcome = await signInWithOcOutcome(
-            offline ? { popupOrigin: window.location.origin, popupPath: '/stand-in/popup' } : {},
-        );
-        if (outcome.status === 'blocked') {
-            say('Your browser blocked the window. Allow pop-ups for this site, then try again.');
-        }
-        if (outcome.status === 'signed_in') {
+    error.textContent = text;
+    error.hidden = !text;
+};
+
+document.addEventListener('oc-sign-in-outcome', (event) => {
+    const button = event.target.closest?.('button[data-orangecheck]');
+    if (button) say(button, event.detail.message);
+});
+
+document.addEventListener('oc-signed-in', (event) => {
+    const button = event.target.closest?.('button[data-orangecheck]');
+    if (!button) return;
+    event.detail.waitUntil(
+        (async () => {
             const r = await fetch(button.dataset.orangecheck, {
                 method: 'POST',
-                headers: { Authorization: `Bearer ${outcome.token}` },
+                headers: { Authorization: `Bearer ${event.detail.token}` },
             });
             const body = await r.json().catch(() => ({}));
             if (r.ok && body.ok) return window.location.assign(button.dataset.then);
-            say(sentence(body.error ?? body.reason));
-        }
-        button.disabled = false;
-        button.textContent = label;
-    });
-}
+            say(button, sentence(body.error ?? body.reason));
+        })(),
+    );
+});
 
 // Offline only: the stand-in popup answers its opener as the real one does, with
 // { type: 'oc-signin-success', account, token }, posted to the opener's origin only.
@@ -72,3 +71,22 @@ popupForm?.addEventListener('submit', async (e) => {
 // Offline only: a claim link carries its token after #, which never reaches a server.
 const claimForm = document.getElementById('stand-in-claim');
 if (claimForm) claimForm.elements.t.value = new URLSearchParams(window.location.hash.slice(1)).get('t') ?? '';
+
+// Last, so the forms above are answered while it loads.
+if (document.body.dataset.mode === 'offline') {
+    const { enhanceSignInButton, OUTCOME_COPY } = await import('./button.mjs');
+    for (const button of document.querySelectorAll('button[data-oc-sign-in]')) {
+        const tell = (type, detail) =>
+            button.dispatchEvent(new CustomEvent(type, { bubbles: true, detail }));
+        enhanceSignInButton(button, {
+            popup: { popupOrigin: window.location.origin, popupPath: '/stand-in/popup' },
+            onOutcome: ({ status }) =>
+                tell('oc-sign-in-outcome', { status, message: OUTCOME_COPY[status] ?? '' }),
+            onSignedIn: async ({ account, token }) => {
+                const work = [];
+                tell('oc-signed-in', { account, token, waitUntil: (p) => work.push(p) });
+                await Promise.all(work);
+            },
+        });
+    }
+}

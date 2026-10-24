@@ -29,11 +29,18 @@ types, so the code paths are the ones that run live. Then:
 4. **Sign out**, then **Sign in with orangecheck**: the same account.
 5. **Unlink orangecheck**, or **Delete my account**.
 
-Pages are plain forms that post and redirect. The only script is
-`app/static/orangecheck.mjs`, for the sign-in popup. Next to it is a copy of the
-me-client SDK's `popup.mjs`, which has no imports; the quickstart's advice for a site
-without a bundler is to serve it from your own origin. Copy it again when you
-upgrade.
+Pages are plain forms that post and redirect. "Sign in with orangecheck" is the
+site's own `<button class="oc">`, marked `data-oc-sign-in`, with a
+`<span data-oc-mark></span>` where the mark goes. `app/templates/base.html` loads the
+me-client SDK's `button.css` and, live, its `button-auto.mjs` from jsDelivr: the tags
+from [ochk.io/docs/integration/sign-in-button](https://ochk.io/docs/integration/sign-in-button),
+pinned to one version with Subresource Integrity, and allowed by exact path in the
+Content-Security-Policy (`app/main.py`). The SDK draws the mark in the button's text
+colour and opens the sign-in popup; the site's CSS styles the rest.
+`app/static/orangecheck.mjs` takes the token from the button's `oc-signed-in` event and
+sends it to the server. Offline, it does the same with `app/static/button.mjs`, a copy of
+the SDK's file pointed at the stand-in popup. When you upgrade, take the new tags from the
+docs page and copy that version's `button.mjs`; a test fails while they differ.
 
 ## Run it live
 
@@ -94,6 +101,6 @@ expire: keep it as private as the sessions.
 
 ## License
 
-MIT, like the rest of this repo. `app/static/popup.mjs` is from
+MIT, like the rest of this repo. `app/static/button.mjs` is from
 [`@orangecheck/me-client`](https://www.npmjs.com/package/@orangecheck/me-client),
 also MIT.

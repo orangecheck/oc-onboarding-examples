@@ -72,6 +72,11 @@ app = FastAPI(lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None
 app.mount("/static", StaticFiles(directory=HERE / "static"), name="static")
 templates = Jinja2Templates(directory=HERE / "templates")
 
+# orangecheck's sign-in button, as base.html loads it (ochk.io/docs/integration/sign-in-button).
+ME_CLIENT_CDN = "https://cdn.jsdelivr.net/npm/@orangecheck/me-client@0.48.0/dist/"
+BUTTON_JS = ME_CLIENT_CDN + "button-auto.mjs"
+BUTTON_CSS = ME_CLIENT_CDN + "button.css"
+
 SENTENCES = {
     "bad_email": "Enter an email address.",
     "short_password": "Use at least 10 characters.",
@@ -95,9 +100,11 @@ async def security_headers(request: Request, call_next):
     response.headers["Cross-Origin-Opener-Policy"] = "same-origin-allow-popups"
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    # The two files base.html loads from jsDelivr, by exact path; their tags pin the
+    # version and carry Subresource Integrity.
     response.headers["Content-Security-Policy"] = (
-        "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; "
-        "connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; "
+        f"default-src 'self'; script-src 'self' {BUTTON_JS}; style-src 'self' {BUTTON_CSS}; "
+        "img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; "
         "form-action 'self' https://ochk.app"
     )
     return response

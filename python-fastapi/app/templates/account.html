@@ -58,11 +58,11 @@
     <button
       type="button"
       class="oc"
+      data-oc-sign-in
       data-orangecheck="/api/account/link"
       data-then="/account"
-      data-offline="{{ 'true' if mode == 'offline' else 'false' }}"
     >
-      Link orangecheck
+      <span data-oc-mark></span>Link orangecheck
     </button>
     <p class="error" hidden></p>
   </div>

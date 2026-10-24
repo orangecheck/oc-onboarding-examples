@@ -1,13 +1,14 @@
-import { signInWithOcOutcome } from '@orangecheck/me-client/popup';
-import { useRouter } from 'next/router';
+import { OUTCOME_COPY, SignInWithOrangecheck } from '@orangecheck/me-client/react';
 import { useState } from 'react';
 
 import { postJson, sentence } from './api';
 
 /**
- * Opens orangecheck's sign-in popup (in offline mode, the stand-in at
- * /stand-in/popup) and sends the token it hands back to `endpoint`, once, as a
- * Bearer header. The token is never kept in the page.
+ * orangecheck's own button from the SDK, in this site's button style (class "oc";
+ * the SDK's inherit appearance adds the mark and nothing else). It opens
+ * orangecheck's sign-in popup (in offline mode, the stand-in at /stand-in/popup)
+ * and sends the token it hands back to `endpoint`, once, as a Bearer header. The
+ * token is never kept in the page.
  */
 export function OrangecheckButton({
     offline,
@@ -20,33 +21,31 @@ export function OrangecheckButton({
     label: string;
     then: string;
 }) {
-    const router = useRouter();
-    const [busy, setBusy] = useState(false);
     const [error, setError] = useState<string | null>(null);
-
-    async function go() {
-        setBusy(true);
-        setError(null);
-        const outcome = await signInWithOcOutcome(
-            offline ? { popupOrigin: window.location.origin, popupPath: '/stand-in/popup' } : {},
-        );
-        if (outcome.status === 'blocked')
-            setError(
-                'Your browser blocked the window. Allow pop-ups for this site, then try again.',
-            );
-        if (outcome.status === 'signed_in') {
-            const r = await postJson(endpoint, {}, { Authorization: `Bearer ${outcome.token}` });
-            if (r.ok) return router.push(then);
-            setError(sentence(String(r.body.error ?? r.body.reason ?? '')));
-        }
-        setBusy(false);
-    }
 
     return (
         <div className="stack">
-            <button type="button" className="oc" onClick={go} disabled={busy}>
-                {busy ? 'Waiting for orangecheck…' : label}
-            </button>
+            <SignInWithOrangecheck
+                className="oc"
+                label={label}
+                popup={
+                    offline && typeof window !== 'undefined'
+                        ? { popupOrigin: window.location.origin, popupPath: '/stand-in/popup' }
+                        : undefined
+                }
+                onOutcome={(outcome) =>
+                    setError(
+                        outcome.status in OUTCOME_COPY
+                            ? OUTCOME_COPY[outcome.status as keyof typeof OUTCOME_COPY]
+                            : null,
+                    )
+                }
+                onSignedIn={async ({ token }) => {
+                    const r = await postJson(endpoint, {}, { Authorization: `Bearer ${token}` });
+                    if (r.ok) return window.location.assign(then);
+                    setError(sentence(String(r.body.error ?? r.body.reason ?? '')));
+                }}
+            />
             {error ? <p className="error">{error}</p> : null}
         </div>
     );
