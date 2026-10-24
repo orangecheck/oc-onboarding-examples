@@ -132,6 +132,11 @@ that every server shares, or a token could start a session on each.
 `unended_tokens` holds live tokens until they expire: keep it as private as the
 sessions.
 
+Our copy at oc-onboarding-examples.vercel.app runs on serverless functions, each
+with its own copy of the SQLite file, so a sign-in there can't hold a session. It
+proves the test project's domain and takes its webhook. Whenever `VERCEL` is set,
+its forms are shown but off, under a notice.
+
 ## License
 
 MIT, like the rest of this repo.

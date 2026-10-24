@@ -15,11 +15,14 @@ export function OrangecheckButton({
     endpoint,
     label,
     then,
+    disabled = false,
 }: {
     offline: boolean;
     endpoint: string;
     label: string;
     then: string;
+    /** Shown, but off: the Vercel copy, where nobody signs in (see Layout). */
+    disabled?: boolean;
 }) {
     const [error, setError] = useState<string | null>(null);
 
@@ -28,6 +31,7 @@ export function OrangecheckButton({
             <SignInWithOrangecheck
                 className="oc"
                 label={label}
+                disabled={disabled}
                 popup={
                     offline && typeof window !== 'undefined'
                         ? { popupOrigin: window.location.origin, popupPath: '/stand-in/popup' }

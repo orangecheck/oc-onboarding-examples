@@ -42,7 +42,13 @@ export default function SignIn({ info }: Props) {
             <form className="card stack" onSubmit={submit}>
                 <label>
                     Email
-                    <input name="email" type="email" autoComplete="email" required />
+                    <input
+                        name="email"
+                        type="email"
+                        autoComplete="email"
+                        required
+                        disabled={info.proofOnly}
+                    />
                 </label>
                 <label>
                     Password
@@ -51,10 +57,11 @@ export default function SignIn({ info }: Props) {
                         type="password"
                         autoComplete="current-password"
                         required
+                        disabled={info.proofOnly}
                     />
                 </label>
                 {error ? <p className="error">{error}</p> : null}
-                <button type="submit" disabled={busy}>
+                <button type="submit" disabled={busy || info.proofOnly}>
                     Sign in
                 </button>
             </form>
@@ -64,6 +71,7 @@ export default function SignIn({ info }: Props) {
                     endpoint="/api/auth/orangecheck"
                     label="Sign in with orangecheck"
                     then="/account"
+                    disabled={info.proofOnly}
                 />
                 <p className="hint">
                     A Bitcoin wallet, email, Google or GitHub. This site gets an id for you, not

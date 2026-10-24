@@ -38,6 +38,15 @@ export function cfg(): Config {
     };
 }
 
+/**
+ * True on Vercel. Each function there keeps its own copy of the SQLite file in
+ * /tmp, so a session one function writes, the next never reads: that copy proves
+ * the domain and takes the webhook, and its forms are off.
+ */
+export function proofOnly(): boolean {
+    return Boolean(read('VERCEL'));
+}
+
 /** True when sessions people ended everywhere are refused here (both keys set). */
 export function endedSessionsChecked(c: Config = cfg()): boolean {
     return c.mode === 'live' && Boolean(c.projectKey && c.signingSecret);

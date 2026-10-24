@@ -48,10 +48,13 @@ export default function Reauth({ info, next }: Props) {
                         type="password"
                         autoComplete="current-password"
                         required
+                        disabled={info.proofOnly}
                     />
                 </label>
                 {error ? <p className="error">{error}</p> : null}
-                <button type="submit">Confirm</button>
+                <button type="submit" disabled={info.proofOnly}>
+                    Confirm
+                </button>
             </form>
         </Layout>
     );

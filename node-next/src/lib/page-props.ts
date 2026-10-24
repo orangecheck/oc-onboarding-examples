@@ -2,7 +2,7 @@ import type { IncomingMessage } from 'node:http';
 
 import type { ModeInfo } from '@/components/Layout';
 
-import { cfg, endedSessionsChecked } from './config';
+import { cfg, endedSessionsChecked, proofOnly } from './config';
 import { currentSession, type Session } from './sessions';
 import { type User, userById } from './users';
 
@@ -14,7 +14,11 @@ export async function pageContext(
     const session = s === 'unavailable' ? null : s;
     const user = session ? userById(session.user_id) : null;
     return {
-        info: { mode: cfg().mode, endedSessionsChecked: endedSessionsChecked() },
+        info: {
+            mode: cfg().mode,
+            endedSessionsChecked: endedSessionsChecked(),
+            proofOnly: proofOnly(),
+        },
         session,
         user,
     };

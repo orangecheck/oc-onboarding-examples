@@ -49,7 +49,13 @@ export default function SignUp({ info, connect }: Props) {
             <form className="card stack" onSubmit={submit}>
                 <label>
                     Email
-                    <input name="email" type="email" autoComplete="email" required />
+                    <input
+                        name="email"
+                        type="email"
+                        autoComplete="email"
+                        required
+                        disabled={info.proofOnly}
+                    />
                 </label>
                 <label>
                     Password
@@ -59,13 +65,14 @@ export default function SignUp({ info, connect }: Props) {
                         autoComplete="new-password"
                         minLength={10}
                         required
+                        disabled={info.proofOnly}
                     />
                 </label>
                 {connect === 'opt-in' ? (
                     // Unticked by default, never bundled with anything else; the words are the SDK's.
                     <div className="consent">
                         <label className="check">
-                            <input type="checkbox" name="orangecheck" />
+                            <input type="checkbox" name="orangecheck" disabled={info.proofOnly} />
                             {CONNECT_CONSENT_LABEL}
                         </label>
                         <p className="hint">{CONNECT_CONSENT_BLURB}</p>
@@ -78,7 +85,7 @@ export default function SignUp({ info, connect }: Props) {
                     </p>
                 ) : null}
                 {error ? <p className="error">{error}</p> : null}
-                <button type="submit" disabled={busy}>
+                <button type="submit" disabled={busy || info.proofOnly}>
                     Sign up
                 </button>
             </form>

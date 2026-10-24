@@ -7,7 +7,12 @@ import type { Mode } from '@/lib/config';
 export interface ModeInfo {
     mode: Mode;
     endedSessionsChecked: boolean;
+    /** The Vercel copy: it proves the domain and takes the webhook; nobody signs in. */
+    proofOnly: boolean;
 }
+
+const RUN_IT =
+    'https://github.com/orangecheck/oc-onboarding-examples/tree/main/node-next#run-it-offline';
 
 /** The frame every page shares: the site's name, its links, and which orangecheck it talks to. */
 export function Layout({
@@ -39,7 +44,12 @@ export function Layout({
                     )}
                 </nav>
             </header>
-            {info.mode === 'offline' ? (
+            {info.proofOnly ? (
+                <p className="banner" role="status">
+                    This copy only proves the domain. <a href={RUN_IT}>Run it yourself</a> to sign
+                    in.
+                </p>
+            ) : info.mode === 'offline' ? (
                 <p className="banner">
                     Offline mode. Nothing here talks to orangecheck: sign-in, Connect and claiming
                     run against stand-ins in this repo. Add your keys to <code>.env</code> to run it
