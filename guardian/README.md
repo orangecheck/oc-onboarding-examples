@@ -21,7 +21,10 @@ today. When it opens, a real seat goes like this:
 4. Sign the federation's charter.
 5. Run the key ceremony with the other guardians: the same commands as below.
 
-This folder covers step 5 and what follows it, on your own machine.
+This folder covers step 5 and what follows it, on your own machine. A federation's
+creator can later hand it to another operator with
+`oc-guardian federation handover offer|accept` (kit 0.2.10 and later). Those are
+signed for ochk.app, so this folder doesn't use them.
 
 ## Requirements
 

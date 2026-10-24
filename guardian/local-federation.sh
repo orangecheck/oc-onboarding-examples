@@ -19,7 +19,7 @@
 set -euo pipefail
 
 # The kit release and its x86_64 Linux tarball's sha256, together on one line: a new release changes only this line.
-KIT_VERSION=0.2.9 KIT_SHA256=a47528315b5a79bd1b7684fac05acf815594252ef87c19b6628899d4ab635aa0
+KIT_VERSION=0.2.10 KIT_SHA256=0afe08d91a55e8f167f7365a960fbb2f81f1dae77b857206b280c43a9982cdbe
 KIT_REPO=orangecheck/oc-guardian-kit
 KIT_TARGET=x86_64-unknown-linux-gnu
 FEDIMINT_VERSION=0.11.4
