@@ -21,6 +21,7 @@ from orangecheck import (
     CONNECT_CONSENT_BLURB,
     CONNECT_CONSENT_LABEL,
     InvalidWebhook,
+    normalize_email,
     safe_return_path,
     verify_webhook,
 )
@@ -256,7 +257,7 @@ def signup(
     always ("seamless"), or only when they ticked the box ("opt-in"). A refusal never
     blocks the sign-up."""
     same_origin(request)
-    email = email.strip().lower()
+    email = normalize_email(email)
     if not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", email):
         return back("/signup", "bad_email")
     if len(password) < 10:
@@ -281,7 +282,7 @@ def signup(
 @app.post("/signin")
 def signin(request: Request, email: str = Form(""), password: str = Form("")):
     same_origin(request)
-    user = user_by_email(email.strip().lower())
+    user = user_by_email(normalize_email(email))
     ok = check_password(password, user["password_hash"] if user else DECOY)
     if not user or not ok:
         return back("/signin", "wrong_email_or_password")

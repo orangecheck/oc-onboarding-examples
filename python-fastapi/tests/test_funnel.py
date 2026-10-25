@@ -37,6 +37,14 @@ def test_signs_in_with_the_right_password_only():
     assert right.headers["location"] == "/account"
 
 
+def test_an_email_is_the_same_address_in_any_case_and_any_surrounding_space():
+    signed_up(" Ada@Example.COM ")
+    # U+FEFF is space to JavaScript's trim (and so to orangecheck), not to str.strip().
+    for email in ["ada@example.com", "\ufeffADA@example.com", "ada@EXAMPLE.com\t"]:
+        r = browser().post("/signin", data={"email": email, "password": PASSWORD})
+        assert r.headers["location"] == "/account", email
+
+
 def test_opt_in_unticked_makes_no_orangecheck_account():
     signed_up(orangecheck=False)
     assert users()[0]["connect_did"] is None

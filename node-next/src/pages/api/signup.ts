@@ -1,3 +1,5 @@
+import { normalizeEmail } from '@orangecheck/auth-core/identifiers';
+
 import { cfg } from '@/lib/config';
 import { connectConfigured, provision } from '@/lib/connect';
 import { body, post } from '@/lib/http';
@@ -10,9 +12,7 @@ import { createPasswordUser, setConnect, userByEmail } from '@/lib/users';
 // the box ("opt-in"). It never blocks the sign-up: a refusal is a result.
 export default post(async (req, res) => {
     const b = body(req);
-    const email = String(b.email ?? '')
-        .trim()
-        .toLowerCase();
+    const email = normalizeEmail(String(b.email ?? ''));
     const password = String(b.password ?? '');
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
         return res.status(400).json({ ok: false, error: 'bad_email' });

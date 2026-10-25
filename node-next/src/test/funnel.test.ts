@@ -48,6 +48,14 @@ describe('the site’s own login, with Connect', () => {
         });
         expect((await as(PASSWORD)).status).toBe(200);
     });
+    it('takes an email in any case and with any surrounding space', async () => {
+        await signedUp(' Ada@Example.COM ');
+        // U+FEFF is space to JavaScript's trim, and so to orangecheck's normalizeEmail.
+        for (const email of ['ada@example.com', '\ufeffADA@example.com', 'ada@EXAMPLE.com\t']) {
+            const r = await new Browser().call(signin, { body: { email, password: PASSWORD } });
+            expect(r.status, email).toBe(200);
+        }
+    });
     it('opt-in: an unticked box makes no orangecheck account', async () => {
         await signedUp('ada@example.com', false);
         expect(users()[0]!.connect_did).toBeNull();

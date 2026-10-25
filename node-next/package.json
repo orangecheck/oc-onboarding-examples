@@ -18,7 +18,7 @@
         "format:check": "prettier --check ."
     },
     "dependencies": {
-        "@orangecheck/auth-core": "^2.16.0",
+        "@orangecheck/auth-core": "^2.22.0",
         "@orangecheck/me-client": "^0.51.0",
         "jose": "^6.2.2",
         "next": "16.4.2",
