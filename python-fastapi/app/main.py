@@ -21,6 +21,7 @@ from orangecheck import (
     CONNECT_CONSENT_BLURB,
     CONNECT_CONSENT_LABEL,
     InvalidWebhook,
+    safe_return_path,
     verify_webhook,
 )
 from starlette.concurrency import run_in_threadpool
@@ -37,7 +38,6 @@ from .orangecheck_signin import (
     spend_token,
 )
 from .passwords import DECOY, check_password, hash_password
-from .safe_next import safe_next
 from .sessions import (
     DAYS_30,
     FRESH_SECONDS,
@@ -210,7 +210,7 @@ def signin_page(request: Request):
 
 @app.get("/reauth")
 def reauth_page(request: Request, next: str | None = None):
-    return page(request, "reauth.html", next=safe_next(next))
+    return page(request, "reauth.html", next=safe_return_path(next, "/account"))
 
 
 @app.get("/account")
@@ -306,11 +306,10 @@ def reauth(request: Request, password: str = Form(""), next: str = Form("/accoun
     who = signed_in(request)
     if not isinstance(who, Who):
         return back("/signin")
+    back_to = safe_return_path(next, "/account")
     if not who.user["password_hash"] or not check_password(password, who.user["password_hash"]):
-        return RedirectResponse(
-            f"/reauth?next={quote(safe_next(next), safe='')}&error=wrong_password", 303
-        )
-    response = back(safe_next(next))
+        return RedirectResponse(f"/reauth?next={quote(back_to, safe='')}&error=wrong_password", 303)
+    response = back(back_to)
     end_session(request, response)
     start_session(response, who.user["id"], "password", fresh=True)
     return response

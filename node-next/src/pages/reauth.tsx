@@ -1,3 +1,4 @@
+import { safeReturnPath } from '@orangecheck/me-client';
 import type { GetServerSideProps } from 'next';
 import { useRouter } from 'next/router';
 import { type FormEvent, useState } from 'react';
@@ -5,7 +6,6 @@ import { type FormEvent, useState } from 'react';
 import { postJson, sentence } from '@/components/api';
 import { Layout, type ModeInfo } from '@/components/Layout';
 import { pageContext } from '@/lib/page-props';
-import { safeNext } from '@/lib/safe-next';
 
 interface Props {
     info: ModeInfo;
@@ -15,7 +15,7 @@ interface Props {
 export const getServerSideProps: GetServerSideProps<Props> = async ({ req, query }) => {
     const { info, user } = await pageContext(req);
     if (!user) return { redirect: { destination: '/signin', permanent: false } };
-    return { props: { info, next: safeNext(query.next) } };
+    return { props: { info, next: safeReturnPath(query.next, '/account') } };
 };
 
 export default function Reauth({ info, next }: Props) {

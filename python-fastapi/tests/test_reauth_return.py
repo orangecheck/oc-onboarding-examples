@@ -1,8 +1,10 @@
-"""The return path after a fresh sign-in never leaves the site."""
+"""The return path after a fresh sign-in never leaves the site.
+
+The rule is orangecheck's safe_return_path, held to the SDK's own vectors;
+these hold the route to it.
+"""
 
 import pytest
-
-from app.safe_next import safe_next
 
 from .conftest import PASSWORD, signed_up
 
@@ -28,19 +30,16 @@ REFUSED = [
 
 
 @pytest.mark.parametrize("raw", REFUSED)
-def test_refuses_a_path_off_the_site(raw):
-    assert safe_next(raw) == "/account"
+def test_the_reauth_page_refuses_a_path_off_the_site(raw):
+    b = signed_up()
+    r = b.post("/reauth", data={"password": PASSWORD, "next": raw})
+    assert (r.status_code, r.headers["location"]) == (303, "/account")
 
 
-def test_keeps_a_path_on_this_site():
-    assert safe_next("/account") == "/account"
-    assert safe_next("/account/delete?step=2#confirm") == "/account/delete?step=2#confirm"
-    assert safe_next("/account?from=/a/../b") == "/account?from=/a/../b"
-
-
-@pytest.mark.parametrize("raw", [None, 42, ["/account"]])
-def test_answers_the_fallback_for_anything_that_is_not_text(raw):
-    assert safe_next(raw) == "/account"
+def test_the_reauth_page_keeps_a_path_on_this_site():
+    b = signed_up()
+    r = b.post("/reauth", data={"password": PASSWORD, "next": "/account?tab=a&b=1"})
+    assert (r.status_code, r.headers["location"]) == (303, "/account?tab=a&b=1")
 
 
 def test_the_reauth_route_sends_an_off_site_next_home():
