@@ -76,7 +76,7 @@ app.mount("/static", StaticFiles(directory=HERE / "static"), name="static")
 templates = Jinja2Templates(directory=HERE / "templates")
 
 # orangecheck's sign-in button, as base.html loads it (ochk.io/docs/integration/sign-in-button).
-ME_CLIENT_CDN = "https://cdn.jsdelivr.net/npm/@orangecheck/me-client@0.48.0/dist/"
+ME_CLIENT_CDN = "https://cdn.jsdelivr.net/npm/@orangecheck/me-client@0.53.2/dist/"
 BUTTON_JS = ME_CLIENT_CDN + "button-auto.mjs"
 BUTTON_CSS = ME_CLIENT_CDN + "button.css"
 

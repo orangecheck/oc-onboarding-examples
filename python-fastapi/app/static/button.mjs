@@ -1,4 +1,4 @@
-// @orangecheck/me-client 0.48.0 dist/button.mjs (MIT), for offline mode only: live pages load button-auto.mjs from jsDelivr (base.html). Copy it again when you upgrade.
+// @orangecheck/me-client 0.53.2 dist/button.mjs (MIT), for offline mode only: live pages load button-auto.mjs from jsDelivr (base.html). Copy it again when you upgrade.
 // node_modules/@orangecheck/mark/dist/index.mjs
 var MARK_POINTS = {
   top: "0,3 2,2 6,4 14,0 16,1 6,6",
@@ -63,11 +63,35 @@ function markElement(doc, options = {}) {
   return svg;
 }
 
+// src/own-options.ts
+function inheritedKeys(opts, known) {
+  return [...known].filter((k) => k in opts && !Object.prototype.hasOwnProperty.call(opts, k));
+}
+
 // src/popup.ts
 var DEFAULT_POPUP_ORIGIN = "https://me.ochk.io";
 var DEFAULT_POPUP_PATH = "/popup/signin";
 var DEFAULT_FEATURES = "width=480,height=720,resizable=yes,scrollbars=yes";
+var POPUP_OPTIONS = /* @__PURE__ */ new Set(["popupOrigin", "popupPath", "features", "signal"]);
+function checkPopupOptions(options) {
+  if (options === null || typeof options !== "object") {
+    throw new TypeError("@orangecheck/me-client: signInWithOc: options must be an object");
+  }
+  const unknown = Object.keys(options).filter((k) => !POPUP_OPTIONS.has(k));
+  if (unknown.length > 0) {
+    throw new TypeError(
+      `@orangecheck/me-client: signInWithOc: unknown option ${unknown.join(", ")}. It reads only ${[...POPUP_OPTIONS].join(", ")}.`
+    );
+  }
+  const inherited = inheritedKeys(options, POPUP_OPTIONS);
+  if (inherited.length > 0) {
+    throw new TypeError(
+      `@orangecheck/me-client: signInWithOc: option ${inherited.join(", ")} is inherited, not set by the caller`
+    );
+  }
+}
 function signInWithOcOutcome(options = {}) {
+  checkPopupOptions(options);
   const popupOrigin = options.popupOrigin ?? DEFAULT_POPUP_ORIGIN;
   const popupPath = options.popupPath ?? DEFAULT_POPUP_PATH;
   const features = options.features ?? DEFAULT_FEATURES;
@@ -145,6 +169,7 @@ var KEYS = /* @__PURE__ */ new Set(["onSignedIn", "onOutcome", "mark", "label", 
 var NAMED = /(^|[^\p{L}\p{N}])orangecheck($|[^\p{L}\p{N}])/u;
 function checkSignInOptions(options) {
   for (const key of Object.keys(options)) if (!KEYS.has(key)) throw new TypeError(`sign-in button: unknown option ${key}`);
+  for (const key of inheritedKeys(options, KEYS)) throw new TypeError(`sign-in button: option ${key} is inherited, not set by the caller`);
   if (typeof options.onSignedIn !== "function") throw new TypeError("sign-in button: onSignedIn is required");
   const label = options.label ?? SIGN_IN_LABELS.signIn;
   if (label !== false && (typeof label !== "string" || !NAMED.test(label))) {

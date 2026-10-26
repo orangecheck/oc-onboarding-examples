@@ -41,6 +41,8 @@ colour and opens the sign-in popup; the site's CSS styles the rest.
 sends it to the server. Offline, it does the same with `app/static/button.mjs`, a copy of
 the SDK's file pointed at the stand-in popup. When you upgrade, take the new tags from the
 docs page and copy that version's `button.mjs`; a test fails while they differ.
+Renovate does not move this pin. It is moved by hand, in three places: the two tags in
+`app/templates/base.html`, `ME_CLIENT_CDN` in `app/main.py`, and `app/static/button.mjs`.
 
 ## Run it live
 
