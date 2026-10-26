@@ -1,50 +1,38 @@
 {
     "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-    "extends": ["config:recommended", ":dependencyDashboard", ":semanticCommits"],
+    "extends": [
+        "config:recommended",
+        ":dependencyDashboard",
+        ":semanticCommits",
+        "github>orangecheck/oc-packages:renovate-family"
+    ],
     "labels": ["renovate"],
     "prConcurrentLimit": 5,
     "prHourlyLimit": 10,
     "packageRules": [
         {
-            "description": "Disabled by default — this Renovate config is scoped to the @orangecheck/* family ONLY. Third-party deps (next, react, tailwind, etc.) are NOT auto-tracked here; bump them by hand when you choose to.",
-            "matchUpdateTypes": ["patch", "minor", "major"],
-            "enabled": false
+            "description": "orangecheck on PyPI: its range (>=, <4) already admits each new minor, so an update moves uv.lock, which is what CI and a fork install. Renovate takes a range strategy only in a rule that names no update type.",
+            "matchDatasources": ["pypi"],
+            "matchPackageNames": ["orangecheck"],
+            "rangeStrategy": "update-lockfile"
         },
         {
-            "description": "@orangecheck/* patch + minor, bundled into one PR per consumer after a 1-day stability window. Renovate does not merge it: its fine-grained token cannot read GitHub Actions check runs, so it would merge on Vercel's status alone. This repo's own CI merges the PR once its gating jobs pass (merge-renovate).",
-            "matchPackageNames": ["/^@orangecheck//"],
-            "matchUpdateTypes": ["patch", "minor"],
-            "enabled": true,
-            "groupName": "@orangecheck/* (family)",
-            "automerge": false,
-            "automergeType": "pr",
-            "minimumReleaseAge": "1 day"
-        },
-        {
-            "description": "orangecheck on PyPI rides the same family bump, after the same 1-day window.",
+            "description": "orangecheck on PyPI rides the family bump after the same 1-day window.",
             "matchDatasources": ["pypi"],
             "matchPackageNames": ["orangecheck"],
             "matchUpdateTypes": ["patch", "minor"],
             "enabled": true,
             "groupName": "@orangecheck/* (family)",
-            "automerge": false,
             "minimumReleaseAge": "1 day"
         },
         {
-            "description": "Human-review orangecheck major bumps on PyPI, as on npm.",
+            "description": "orangecheck majors on PyPI: a PR of their own, merged by a person, after the same window, as on npm.",
             "matchDatasources": ["pypi"],
             "matchPackageNames": ["orangecheck"],
             "matchUpdateTypes": ["major"],
             "enabled": true,
             "automerge": false,
-            "labels": ["renovate", "major-bump"]
-        },
-        {
-            "description": "Human-review @orangecheck/* major bumps — these change wire shape.",
-            "matchPackageNames": ["/^@orangecheck//"],
-            "matchUpdateTypes": ["major"],
-            "enabled": true,
-            "automerge": false,
+            "minimumReleaseAge": "1 day",
             "labels": ["renovate", "major-bump"]
         }
     ]
