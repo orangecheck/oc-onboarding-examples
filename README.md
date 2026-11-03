@@ -32,10 +32,9 @@ Read on 2026-10-23. This table changes when a status does.
 
 **Custody, in the words [ochk.app/custody](https://ochk.app/custody) uses.**
 orangecheck holds every key that can move funds while the system is in testing.
-"This is custody, not self-custody, and nothing moves out of it yet. Moving to your
-own keys opens once an independent federation settles payouts. Signing in with
-your own Bitcoin key is self-custody of your key today. It does not move what you
-earn." These examples are identity only: no events, nothing paid.
+"This is custody, not self-custody. Payouts, once they run, go to a Lightning
+wallet you choose. Signing in with your own Bitcoin key is self-custody of your key
+today. It does not move what you earn." (read 2026-11-03) These examples are identity only: no events, nothing paid.
 
 ## What you host, and what you still depend on
 

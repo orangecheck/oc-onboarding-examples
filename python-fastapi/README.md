@@ -3,7 +3,7 @@
 The same site as [`node-next`](../node-next), in Python: its own login (an email and
 a password, kept in SQLite), with orangecheck behind it. FastAPI, server-rendered
 pages, Python 3.10 or later, [`orangecheck`](https://pypi.org/project/orangecheck/)
-3.2 or later.
+3.14.1 or later (`pyproject.toml`).
 
 ## Install
 
