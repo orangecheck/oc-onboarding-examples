@@ -1,6 +1,8 @@
 """Each test checks a rule from the quickstart's checklist (ochk.io/docs/me/quickstart)
 or the Connect docs (ochk.io/docs/connect), through the site's real routes."""
 
+import base64
+import json
 import re
 import time
 from types import SimpleNamespace
@@ -159,7 +161,12 @@ def test_a_cross_site_request_is_refused_before_anything_is_read():
 
 
 def test_the_stand_in_issues_tokens_offline_only(monkeypatch):
-    assert browser().post("/stand-in/token", json={"name": "Ada"}).status_code == 200
+    r = browser().post("/stand-in/token", json={"name": "Ada"})
+    assert r.status_code == 200
+    # As the real popup answers a site outside orangecheck: no name, in the account or the token.
+    assert r.json()["account"] == {"did_oc": stand_in.did_for("Ada"), "display_name": None}
+    claims = json.loads(base64.urlsafe_b64decode(r.json()["token"].split(".")[1] + "=="))
+    assert "name" not in claims and claims["did_oc"] == stand_in.did_for("Ada")
     monkeypatch.setenv("OC_PROJECT_KEY", "pk_test_x")
     assert browser().post("/stand-in/token", json={"name": "Ada"}).status_code == 404
 

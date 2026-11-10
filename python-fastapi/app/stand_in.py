@@ -77,7 +77,8 @@ def sign(claims: dict) -> str:
 
 
 def token(name: str) -> dict:
-    """What the popup hands the page: a token bound to this site's origin, with an rh."""
+    """What the popup hands the page: a token bound to this site's origin, with an rh and
+    no name. The real popup gives a site outside orangecheck no name either."""
     did = did_for(name)
     t = int(time.time())
     claims = {
@@ -90,7 +91,7 @@ def token(name: str) -> dict:
         "iat": t,
         "exp": t + 3600,
     }
-    return {"token": sign(claims), "account": {"did_oc": did, "display_name": name}}
+    return {"token": sign(claims), "account": {"did_oc": did, "display_name": None}}
 
 
 # ---- Connect ----

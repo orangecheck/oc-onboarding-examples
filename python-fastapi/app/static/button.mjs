@@ -1,4 +1,4 @@
-// @orangecheck/me-client 0.53.2 dist/button.mjs (MIT), for offline mode only: live pages load button-auto.mjs from jsDelivr (base.html). Copy it again when you upgrade.
+// @orangecheck/me-client 0.59.0 dist/button.mjs (MIT), for offline mode only: live pages load button-auto.mjs from jsDelivr (base.html). Copy it again when you upgrade.
 // node_modules/@orangecheck/mark/dist/index.mjs
 var MARK_POINTS = {
   top: "0,3 2,2 6,4 14,0 16,1 6,6",
@@ -72,6 +72,7 @@ function inheritedKeys(opts, known) {
 var DEFAULT_POPUP_ORIGIN = "https://me.ochk.io";
 var DEFAULT_POPUP_PATH = "/popup/signin";
 var DEFAULT_FEATURES = "width=480,height=720,resizable=yes,scrollbars=yes";
+var CHALLENGE_NONCE = /^[A-Za-z0-9_-]{16,128}$/;
 var POPUP_OPTIONS = /* @__PURE__ */ new Set(["popupOrigin", "popupPath", "features", "signal"]);
 function checkPopupOptions(options) {
   if (options === null || typeof options !== "object") {
@@ -128,12 +129,23 @@ function signInWithOcOutcome(options = {}) {
       if (event.origin !== popupOrigin) return;
       if (event.source !== popup) return;
       const data = event.data;
+      if (data?.type === "oc-signin-challenge") {
+        answerChallenge(data.nonce);
+        return;
+      }
       if (!data || data.type !== "oc-signin-success") return;
       if (!data.account || !data.token) {
         settle({ status: "failed" });
         return;
       }
       settle({ status: "signed_in", account: data.account, token: data.token });
+    }
+    function answerChallenge(nonce) {
+      if (typeof nonce !== "string" || !CHALLENGE_NONCE.test(nonce)) return;
+      try {
+        popup?.postMessage({ type: "oc-signin-echo", nonce }, popupOrigin);
+      } catch {
+      }
     }
     function onAbort() {
       settle({ status: "aborted" });

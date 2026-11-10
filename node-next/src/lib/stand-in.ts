@@ -55,13 +55,15 @@ export function standInDid(name: string): string {
     return `did:oc:${createHash('sha256').update(`stand-in ${name.trim().toLowerCase()}`).digest('hex').slice(0, 32)}`;
 }
 
-/** A sign-in token shaped as ochk.io issues one: bound to this site, with a revocation handle. */
+/**
+ * A sign-in token shaped as ochk.io issues one: bound to this site, with a revocation handle and
+ * no name. The real popup gives a site outside orangecheck no name either.
+ */
 export async function standInToken(name: string) {
     const did = standInDid(name);
     const token = await new SignJWT({
         did_oc: did,
         rh: randomBytes(16).toString('base64url'),
-        name,
     })
         .setProtectedHeader({ alg: 'EdDSA', kid: KID })
         .setIssuer(standInIssuer())
@@ -71,7 +73,7 @@ export async function standInToken(name: string) {
         .setIssuedAt()
         .setExpirationTime('1h')
         .sign((await key()).privateKey);
-    return { token, account: { did_oc: did, display_name: name } };
+    return { token, account: { did_oc: did, display_name: null } };
 }
 
 // ---- Connect ----

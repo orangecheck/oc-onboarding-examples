@@ -1,8 +1,10 @@
+import { decodeJwt } from 'jose';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { assertDeployable } from '@/lib/config';
 import { db, now } from '@/lib/db';
 import { setEndedSessionsForTests } from '@/lib/sessions';
+import { standInDid } from '@/lib/stand-in';
 import deleteAccount from '@/pages/api/account/delete';
 import link from '@/pages/api/account/link';
 import unlink from '@/pages/api/account/unlink';
@@ -194,6 +196,11 @@ describe('sign in with orangecheck', () => {
     it('the stand-in popup issues tokens to this site only, and only offline', async () => {
         const r = await new Browser().call(standInToken, { body: { name: 'Ada' } });
         expect(r.status).toBe(200);
+        // As the real popup answers a site outside orangecheck: no name, in the account or the token.
+        expect(r.body.account).toEqual({ did_oc: standInDid('Ada'), display_name: null });
+        const claims = decodeJwt(String(r.body.token));
+        expect(claims).not.toHaveProperty('name');
+        expect(claims.did_oc).toBe(standInDid('Ada'));
         process.env.OC_PROJECT_KEY = 'pk_test_x';
         expect((await new Browser().call(standInToken, { body: { name: 'Ada' } })).status).toBe(
             404,
