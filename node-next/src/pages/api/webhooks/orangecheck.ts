@@ -6,7 +6,10 @@ import { markConnectClaimed } from '@/lib/users';
 
 // Your project's webhooks (ochk.io/docs/me/webhooks). The one this site acts on
 // is connect.claimed: the person claimed the account Connect made for them.
-// The signature is over the raw bytes, so Next must not parse the body.
+// The signature is over the raw bytes, so Next must not parse the body. One key
+// signs every project's deliveries, so verify with this project's key: another
+// project's delivery, or one more than a day old, is refused. Marking an account
+// claimed twice changes nothing, so this site keeps no delivery ids.
 export const config = { api: { bodyParser: false } };
 
 async function raw(req: NextApiRequest): Promise<string> {
@@ -16,7 +19,9 @@ async function raw(req: NextApiRequest): Promise<string> {
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-    if (cfg().mode !== 'live') return res.status(404).json({ ok: false, error: 'not_found' });
+    const { mode, projectKey } = cfg();
+    if (mode !== 'live' || !projectKey)
+        return res.status(404).json({ ok: false, error: 'not_found' });
     if (req.method !== 'POST') return res.status(405).end();
     const text = await raw(req);
     const sig = req.headers['oc-signature'];
@@ -25,6 +30,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         text,
         typeof sig === 'string' ? sig : undefined,
         typeof kid === 'string' ? kid : undefined,
+        { project: projectKey },
     );
     if (!v.ok) return res.status(401).json({ ok: false, error: v.reason });
     const event = JSON.parse(text) as { subtype?: string; did_oc?: string };

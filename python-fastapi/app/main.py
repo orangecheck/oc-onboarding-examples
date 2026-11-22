@@ -463,14 +463,17 @@ def delete_account(request: Request):
 @app.post("/api/webhooks/orangecheck")
 async def webhook(request: Request):
     """Your project's webhooks (ochk.io/docs/me/webhooks). The one this site acts on is
-    connect.claimed. The signature is over the raw bytes. A system event like this one
-    carries no "id" in its body; its id is the OC-Envelope-Id header."""
-    if cfg().mode != "live":
+    connect.claimed. The signature is over the raw bytes. One key signs every project's
+    deliveries, so verify with this project's key: another project's delivery, or one
+    more than a day old, is refused. Every delivery's body signs its "id"; marking an
+    account claimed twice changes nothing, so this site keeps none."""
+    c = cfg()
+    if c.mode != "live" or not c.project_key:
         return api_error(404, "not_found")
     raw = await request.body()
     try:
         # verify_webhook may fetch keys (up to 10 s): keep it off the event loop.
-        event = await run_in_threadpool(verify_webhook, request.headers, raw)
+        event = await run_in_threadpool(verify_webhook, request.headers, raw, project=c.project_key)
     except InvalidWebhook as e:
         return api_error(401, e.reason)
     if event.get("subtype") == "connect.claimed" and event.get("did_oc"):

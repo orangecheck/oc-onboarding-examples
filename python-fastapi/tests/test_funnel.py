@@ -7,7 +7,10 @@ import re
 import time
 from types import SimpleNamespace
 
+import orangecheck.integrator as integrator
 import pytest
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 from orangecheck import RevocationList
 
 from app import db, orangecheck_signin, sessions, stand_in
@@ -402,16 +405,38 @@ def test_a_webhook_without_a_signature_is_refused_and_offline_there_is_none(monk
     assert r.status_code == 401 and r.json()["error"] == "missing"
 
 
-def test_connect_claimed_marks_the_account_claimed(monkeypatch):
+def test_connect_claimed_marks_the_account_claimed(monkeypatch, net):
     signed_up(orangecheck=True)
     monkeypatch.setenv("OC_PROJECT_KEY", "pk_test_x")
     claimed = users()[0]["connect_did"]
-    # The signature check is the SDK's; this is what the site does with a verified event.
-    monkeypatch.setattr(
-        "app.main.verify_webhook", lambda h, b: {"subtype": "connect.claimed", "did_oc": claimed}
-    )
-    assert browser().post("/api/webhooks/orangecheck", content=b"{}").status_code == 200
+    deliver = _webhook_sender(monkeypatch, net)
+    notice = {"kind": "oc-system-event", "subtype": "connect.claimed", "did_oc": claimed}
+    # One key signs every project's deliveries: another project's is refused.
+    r = deliver({**notice, "project_key": "pk_test_other"})
+    assert r.status_code == 401 and r.json()["error"] == "project"
+    assert users()[0]["connect_claimed"] == 0
+    r = deliver({**notice, "project_key": "pk_test_x", "issued_at": "2026-01-01T00:00:00.000Z"})
+    assert r.status_code == 401 and r.json()["error"] == "stale"
+    assert deliver({**notice, "project_key": "pk_test_x"}).status_code == 200
     assert users()[0]["connect_claimed"] == 1
+
+
+def _webhook_sender(monkeypatch, net):
+    """Signs deliveries as me.ochk.io does, with a key its key set answers, and posts them."""
+    url = integrator.WEBHOOK_JWKS_URL
+    monkeypatch.setattr(integrator, "_webhook_keys", integrator._KeySet(url))
+    key = Ed25519PrivateKey.generate()
+    x = key.public_key().public_bytes(Encoding.Raw, PublicFormat.Raw)
+    x64 = base64.urlsafe_b64encode(x).rstrip(b"=").decode()
+    net.get_routes[url] = (200, {"keys": [{"kty": "OKP", "crv": "Ed25519", "kid": "wh", "x": x64}]})
+
+    def deliver(fields: dict):
+        sent = time.strftime("%Y-%m-%dT%H:%M:%S.000Z", time.gmtime())
+        body = json.dumps({"id": "sys_connect_claimed_1", "issued_at": sent, **fields}).encode()
+        headers = {"OC-Signature": key.sign(body).hex(), "OC-Key-Id": "wh"}
+        return browser().post("/api/webhooks/orangecheck", content=body, headers=headers)
+
+    return deliver
 
 
 def test_the_domain_token_is_in_the_html_the_check_reads(monkeypatch):
