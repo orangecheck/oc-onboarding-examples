@@ -186,6 +186,8 @@ kit_env() {  # guardian index -> KIT=(env ... oc-guardian), the settings `fedimi
     OC_OPERATOR_ID="$(cat "$g/config/operator.id")"
     OC_OPERATOR_PUBKEY_HEX="$(cat "$g/config/operator.pub")"
     OC_FEDERATION_SLUG="$FED_NAME" OC_BITCOIN_NETWORK=regtest
+    # The guardian password, which `fedimintd run` gives fedimintd as its admin password.
+    FM_PASSWORD="$(cat "$g/password")"
     OC_BITCOIND_URL="http://127.0.0.1:$P_RPC" OC_BITCOIND_USERNAME=local OC_BITCOIND_PASSWORD="$(cat "$WD/rpcpass")"
     OC_PUBLIC_HOST=127.0.0.1 OC_P2P_PORT="$(gport "$i" 0)" OC_API_PORT="$(gport "$i" 1)" OC_UI_PORT="$(gport "$i" 2)"
     # Loopback binds keep the setup API off the network (README "Running fedimintd", second option).
