@@ -32,8 +32,8 @@ const nextConfig: NextConfig = {
         return [{ source: '/(.*)', headers: HEADERS }];
     },
     async rewrites() {
-        // Offline mode: the stand-in issuer's key set, where verifyOcToken looks for it.
-        return [{ source: '/stand-in/.well-known/jwks.json', destination: '/api/stand-in/jwks' }];
+        // Offline mode: the stand-in issuer's key set, where withOcAuth looks for it.
+        return [{ source: '/.well-known/jwks.json', destination: '/api/stand-in/jwks' }];
     },
 };
 

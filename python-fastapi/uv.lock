@@ -512,7 +512,7 @@ requires-dist = [
     { name = "fastapi", specifier = ">=0.115" },
     { name = "httpx", specifier = ">=0.27" },
     { name = "jinja2", specifier = ">=3.1" },
-    { name = "orangecheck", specifier = ">=3.14.1,<4" },
+    { name = "orangecheck", specifier = ">=3.21.0,<4" },
     { name = "python-multipart", specifier = ">=0.0.18" },
     { name = "uvicorn", specifier = ">=0.32" },
 ]
@@ -537,15 +537,15 @@ wheels = [
 
 [[package]]
 name = "orangecheck"
-version = "3.19.0"
+version = "3.21.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cryptography" },
     { name = "httpx" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/75/a3/9c3c36b325bd530489a8e6c29d37c1658ad96f0392b08c09fc862c1b9b20/orangecheck-3.19.0.tar.gz", hash = "sha256:6c3dfec6567aefb95d9ef9a064c7d8871be12b7dfe7e402456d108bdca9ee545", size = 184787, upload-time = "2026-11-20T00:50:47.797Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/78/5e/6ff6194f336b24e869946e7c039ef4697181a0fc50b53d9dfbed1e0f4e3e/orangecheck-3.21.0.tar.gz", hash = "sha256:3ba62b8dd4f9da2af28a6075efa6ab604eabba4dbf86819264db276333cda44f", size = 202501, upload-time = "2026-11-24T16:14:33.163Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/a3/ff/be8d472913b6e663933a58fd7a3f107c025679441df8fd8b2307f2ea82d3/orangecheck-3.19.0-py3-none-any.whl", hash = "sha256:1ea0fd711e8fd25595224500d66cb9abc19e9854c536db5019c794b8b8315888", size = 105233, upload-time = "2026-11-20T00:50:46.828Z" },
+    { url = "https://files.pythonhosted.org/packages/5d/27/a30dac6c09276045bd2b755f9be4a61f56ec8ad061f06bd6c0d657ee2d3f/orangecheck-3.21.0-py3-none-any.whl", hash = "sha256:0886dfa299d2d6ec91ca14879d6c43ee668fc4ee4a6f4e83f8545e39f9351592", size = 110312, upload-time = "2026-11-24T16:14:32.09Z" },
 ]
 
 [[package]]

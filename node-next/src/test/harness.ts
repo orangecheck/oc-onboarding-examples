@@ -14,7 +14,7 @@ import { setEndedSessionsForTests } from '@/lib/sessions';
 // answered from it, so verifyOcToken runs for real.
 
 export const ORIGIN = 'http://localhost:3000';
-export const ISSUER = `${ORIGIN}/stand-in`;
+export const ISSUER = ORIGIN;
 export const LIVE_ISSUER = 'https://ochk.io';
 
 type Handler = (req: NextApiRequest, res: NextApiResponse) => unknown;

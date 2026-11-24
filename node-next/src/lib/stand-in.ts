@@ -10,16 +10,19 @@ import { markConnectClaimed } from './users';
 
 // Offline mode only: stand-ins for what orangecheck runs, holding to the
 // contracts its docs state, so the real SDK calls run against them.
-//  - The sign-in popup and its key set, at /stand-in: signInWithOc opens it
-//    through `popupOrigin` and `popupPath`, and verifyOcToken checks its
+//  - The sign-in popup, at /stand-in/popup: signInWithOc opens it through
+//    `popupOrigin` and `popupPath`.
+//  - Its key set, at /.well-known/jwks.json: an issuer is one origin with no
+//    path, so the stand-in issues as this site, and withOcAuth checks its
 //    tokens through `issuer`.
 //  - Connect's provision, claim link and delete (ochk.io/docs/connect).
-// Nothing here talks to orangecheck. In live mode every /stand-in route is 404.
+// Nothing here talks to orangecheck. In live mode every stand-in route, the key
+// set included, is 404.
 
 const KID = 'stand-in';
 
 export function standInIssuer(): string {
-    return `${cfg().siteOrigin}/stand-in`;
+    return cfg().siteOrigin;
 }
 
 type Key = { privateKey: CryptoKey | Uint8Array; publicJwk: JWK };
