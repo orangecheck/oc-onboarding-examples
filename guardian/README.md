@@ -61,9 +61,9 @@ Every pinned sha256 is still checked.
    - Bitcoin Core 31.1, also against its signed `SHA256SUMS`;
    - `oc-guardian`, also against its release `.sha256` and, with `gh`, its
      build provenance attestation;
-   - `fedimintd` 0.11.4, installed by the kit itself (`oc-guardian fedimintd
+   - `fedimintd` 0.13.0, installed by the kit itself (`oc-guardian fedimintd
      install`), which checks its own pin;
-   - `fedimint-cli` 0.11.4, against GitHub's published digest.
+   - `fedimint-cli` 0.13.0, against GitHub's published digest.
 2. **Starts bitcoind on regtest**, RPC on 127.0.0.1 only, with no peers, and mines
    101 blocks.
 3. **Starts four guardians.** Each gets its own operator key
@@ -81,7 +81,7 @@ Every pinned sha256 is still checked.
 
 ## Where fedimint needs an extra step
 
-These come from fedimint 0.11.4 itself, not the kit, and the script handles each
+These come from fedimint 0.13.0 itself, not the kit, and the script handles each
 one in the open:
 
 - **The pinned binaries are nix bundles.** On hosts that block unprivileged user

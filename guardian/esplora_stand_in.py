@@ -1,6 +1,6 @@
 """STAND-IN, NOT ESPLORA. A minimal Esplora-shaped HTTP API over bitcoind RPC, for regtest only.
 
-The fedimint 0.11.4 client watches for deposits through an Esplora HTTP API
+The fedimint 0.13.0 client watches for deposits through an Esplora HTTP API
 and nothing else. This answers the few endpoints it calls, from a local
 bitcoind, on 127.0.0.1 only. It scans every block on each address query, so it
 suits a regtest chain of a few hundred blocks and nothing larger.

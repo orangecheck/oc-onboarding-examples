@@ -13,20 +13,20 @@
 # To skip a download, point these at binaries you have already verified:
 #   BITCOIND, BITCOIN_CLI    Bitcoin Core's bitcoind and bitcoin-cli
 #   OC_GUARDIAN              oc-guardian, the release pinned below
-#   FEDIMINTD_BUNDLE         the fedimintd 0.11.4 release file (its pinned sha256 is still checked)
-#   FEDIMINT_CLI_BUNDLE      the fedimint-cli 0.11.4 release file (its pinned sha256 is still checked)
+#   FEDIMINTD_BUNDLE         the fedimintd 0.13.0 release file (its pinned sha256 is still checked)
+#   FEDIMINT_CLI_BUNDLE      the fedimint-cli 0.13.0 release file (its pinned sha256 is still checked)
 # PEGIN_BTC (default 0.01) is the amount pegin deposits.
 set -euo pipefail
 
 # The kit release and its x86_64 Linux tarball's sha256, together on one line: a new release changes only this line.
-KIT_VERSION=0.2.10 KIT_SHA256=0afe08d91a55e8f167f7365a960fbb2f81f1dae77b857206b280c43a9982cdbe
+KIT_VERSION=0.3.0 KIT_SHA256=49cb66cffe32adea2e36b2470ab895292e0d34f8d78aba4f560c36dc9b822d85
 KIT_REPO=orangecheck/oc-guardian-kit
 KIT_TARGET=x86_64-unknown-linux-gnu
-FEDIMINT_VERSION=0.11.4
+FEDIMINT_VERSION=0.13.0
 # The kit pins this in install.rs; it matches GitHub's published digest.
-FEDIMINTD_SHA256=52b36e81d7bab75c2e3f243566c1ad3dffe4978120d433cc96f1a5d51f62451a
-# GitHub's published digest for the fedimint-cli-v0.11.4 release asset.
-FEDIMINT_CLI_SHA256=6da5c9716ee02a43031bc575af9cc31fee3e5c9dea36992eb0ea0ba088ba0481
+FEDIMINTD_SHA256=b663d1c7316337c67af1296338ffdf90ea0c8f2491b45e0c75f0fed81014c897
+# GitHub's published digest for the fedimint-cli-v0.13.0 release asset.
+FEDIMINT_CLI_SHA256=c32d8fc55b55c73260e2894cd2f6a1df684614a353f609bed5a4282741e5165a
 BITCOIN_VERSION=31.1
 # From SHA256SUMS, whose signatures were checked against the guix.sigs builder keys.
 BITCOIN_SHA256=b80d9c3e04da78fb6f0569685673418cf686fadba9042d926d13fb87ff503f9e
@@ -197,7 +197,7 @@ kit_env() {  # guardian index -> KIT=(env ... oc-guardian), the settings `fedimi
 }
 kit() { local i="$1"; shift; kit_env "$i"; "${KIT[@]}" "$@"; }
 
-# The 0.11.4 client watches for deposits through an Esplora API only; pegin starts a stand-in for one.
+# The 0.13.0 client watches for deposits through an Esplora API only; pegin starts a stand-in for one.
 cli_env() {
   CLI=(env -i PATH="$PATH" HOME="$HOME" "${FM_ENV[@]}" FM_CLIENT_DIR="$WD/client"
     FM_DEFAULT_BITCOIN_RPC_KIND=esplora FM_DEFAULT_BITCOIN_RPC_URL="http://127.0.0.1:$P_ESPLORA"
